@@ -8,6 +8,8 @@ const password = process.env.NEKO_E2E_PASSWORD
 const timeout = Number(process.env.NEKO_E2E_TIMEOUT_MS || 45_000)
 const artifactDir = process.env.NEKO_E2E_ARTIFACT_DIR || '/tmp/neko-e2e-artifacts'
 const outputPath = process.env.NEKO_E2E_OUTPUT || ''
+const viewportWidth = Number(process.env.NEKO_E2E_VIEWPORT_WIDTH || 1280)
+const viewportHeight = Number(process.env.NEKO_E2E_VIEWPORT_HEIGHT || 720)
 
 if (!password) {
   throw new Error('NEKO_E2E_PASSWORD must be set')
@@ -15,11 +17,38 @@ if (!password) {
 
 const events = []
 let malformedFrames = 0
+let debugFrameCount = 0
 const startedAt = performance.now()
 let browser
 let page
 
 function parseFrame(data) {
+  if (process.env.NEKO_E2E_DEBUG_WS === '1' && debugFrameCount < 8) {
+    debugFrameCount += 1
+    const keys = data && typeof data === 'object' ? Object.keys(data).join(',') : ''
+    const valueTypes =
+      data && typeof data === 'object'
+        ? Object.entries(data)
+            .map(([key, value]) => `${key}:${typeof value}/${value?.constructor?.name || 'none'}`)
+            .join(',')
+        : ''
+    console.error(
+      `[ws] type=${typeof data} constructor=${data?.constructor?.name || 'none'} keys=${keys} values=${valueTypes} length=${data?.length ?? data?.byteLength ?? 'n/a'}`,
+    )
+  }
+
+  if (data && typeof data === 'object' && 'payload' in data) {
+    data = data.payload
+  }
+
+  if (Buffer.isBuffer(data)) {
+    data = data.toString('utf8')
+  } else if (data instanceof Uint8Array) {
+    data = Buffer.from(data).toString('utf8')
+  } else if (data instanceof ArrayBuffer) {
+    data = Buffer.from(data).toString('utf8')
+  }
+
   if (typeof data !== 'string') {
     malformedFrames += 1
     return
@@ -65,7 +94,7 @@ try {
     args: ['--no-sandbox', '--use-fake-ui-for-media-stream', '--autoplay-policy=no-user-gesture-required'],
   })
   const context = await browser.newContext({
-    viewport: { width: 1280, height: 720 },
+    viewport: { width: viewportWidth, height: viewportHeight },
     permissions: ['microphone'],
   })
   page = await context.newPage()
@@ -136,6 +165,7 @@ try {
     connectionMs,
     firstFrameMs,
     video: frame,
+    viewport: { width: viewportWidth, height: viewportHeight },
     signalingEvents: [...new Set(events)],
     malformedFrames,
     browser: (await browser.version()).trim(),

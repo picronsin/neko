@@ -43,3 +43,17 @@ server/integration/e2e/benchmark.sh
 Results are written under `server/integration/e2e/results` by default. This is
 an explicit local artifact directory and is ignored by Git; remove it after
 review if it is no longer needed.
+
+To run the complete 1/2/5 viewer matrix and generate a Markdown summary:
+
+```bash
+export NEKO_E2E_PASSWORD="$NEKO_DEMO_ADMIN_PASSWORD"
+export NEKO_E2E_VIEWPORT_WIDTH=1280
+export NEKO_E2E_VIEWPORT_HEIGHT=720
+export NEKO_E2E_OUTPUT_DIR=/tmp/neko-baseline-720p
+server/integration/e2e/baseline.sh
+```
+
+For a 1080p run, set `NEKO_DEMO_SCREEN=1920x1080@30` and restart the demo,
+then use `NEKO_E2E_VIEWPORT_WIDTH=1920` and
+`NEKO_E2E_VIEWPORT_HEIGHT=1080`. The report generator requires `jq`.

@@ -4,4 +4,4 @@ WORKDIR /opt/neko-e2e
 COPY package.json ./
 RUN npm install --omit=dev --no-audit --no-fund
 
-ENTRYPOINT ["node", "/tests/playwright.mjs"]
+ENTRYPOINT ["node", "/opt/neko-e2e/tests/playwright.mjs"]

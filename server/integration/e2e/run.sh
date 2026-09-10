@@ -21,7 +21,10 @@ args=(
   -e "NEKO_E2E_TIMEOUT_MS=${NEKO_E2E_TIMEOUT_MS:-45000}"
   -e "NEKO_E2E_HEADLESS=${NEKO_E2E_HEADLESS:-1}"
   -e "NEKO_E2E_PROFILE=${NEKO_E2E_PROFILE:-unspecified}"
-  -v "${integration_dir}:/tests:ro"
+  -e "NEKO_E2E_DEBUG_WS=${NEKO_E2E_DEBUG_WS:-0}"
+  -e "NEKO_E2E_VIEWPORT_WIDTH=${NEKO_E2E_VIEWPORT_WIDTH:-1280}"
+  -e "NEKO_E2E_VIEWPORT_HEIGHT=${NEKO_E2E_VIEWPORT_HEIGHT:-720}"
+  -v "${integration_dir}:/opt/neko-e2e/tests:ro"
 )
 
 if [[ -n "${NEKO_E2E_OUTPUT:-}" ]]; then
