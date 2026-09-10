@@ -335,6 +335,11 @@ func (manager *WebSocketManagerCtx) handle(connection *websocket.Conn, peer type
 				logger.Err(err).Msg("message unmarshalling has failed")
 				continue
 			}
+			if err := protocol.ValidatePayload(data.Event, data.Payload); err != nil {
+				peer.Send(event.SYSTEM_ERROR, protocol.NewError(protocol.InvalidPayload, err.Error()))
+				logger.Warn().Err(err).Str("event", data.Event).Msg("message payload validation failed")
+				continue
+			}
 
 			// log events if not ignored
 			if !slices.Contains(nologEvents, data.Event) {

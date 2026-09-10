@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neko.m1k1o.net/schema/payloads.json",
+  "title": "Neko WebSocket payloads",
+  "description": "Payload contracts for the canonical Neko WebSocket envelope.",
+  "type": "object",
+  "required": ["event"],
+  "additionalProperties": false,
+  "properties": {
+    "event": { "type": "string" },
+    "payload": {}
+  },
+  "$defs": {
+    "SignalRequest": {
+      "type": "object",
+      "properties": {
+        "video_codecs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "video": { "$ref": "#/$defs/PeerVideoRequest" },
+        "audio": { "$ref": "#/$defs/PeerAudioRequest" }
+      },
+      "additionalProperties": false
+    },
+    "PeerVideoRequest": {
+      "type": "object",
+      "properties": {
+        "disabled": { "type": "boolean" },
+        "auto": { "type": "boolean" },
+        "selector": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": false
+    },
+    "PeerAudioRequest": {
+      "type": "object",
+      "properties": { "disabled": { "type": "boolean" } },
+      "additionalProperties": false
+    },
+    "SignalDescription": {
+      "type": "object",
+      "required": ["sdp"],
+      "properties": { "sdp": { "type": "string", "minLength": 1 } },
+      "additionalProperties": false
+    },
+    "SignalCandidate": {
+      "type": "object",
+      "required": ["candidate"],
+      "properties": {
+        "candidate": { "type": "string", "minLength": 1 },
+        "sdpMid": { "type": ["string", "null"] },
+        "sdpMLineIndex": { "type": ["integer", "null"], "minimum": 0 },
+        "usernameFragment": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "ControlEpoch": {
+      "type": "object",
+      "required": ["epoch"],
+      "properties": { "epoch": { "type": "integer", "minimum": 0 } },
+      "additionalProperties": false
+    },
+    "ScreenSize": {
+      "type": "object",
+      "required": ["width", "height", "rate"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "rate": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "ClipboardData": {
+      "type": "object",
+      "required": ["text"],
+      "properties": { "text": { "type": "string" } },
+      "additionalProperties": false
+    },
+    "KeyboardMap": {
+      "type": "object",
+      "required": ["layout"],
+      "properties": {
+        "layout": { "type": "string", "minLength": 1 },
+        "variant": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "KeyboardModifiers": {
+      "type": "object",
+      "properties": {
+        "shift": { "type": "boolean" },
+        "capslock": { "type": "boolean" },
+        "control": { "type": "boolean" },
+        "alt": { "type": "boolean" },
+        "numlock": { "type": "boolean" },
+        "meta": { "type": "boolean" },
+        "super": { "type": "boolean" },
+        "altgr": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "ChatMessage": {
+      "type": "object",
+      "required": ["text"],
+      "properties": { "text": { "type": "string", "minLength": 1 } },
+      "additionalProperties": false
+    },
+    "Error": {
+      "type": "object",
+      "required": ["title", "code", "message", "retryable"],
+      "properties": {
+        "title": { "type": "string" },
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "retryable": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "event": { "const": "signal/request" } } },
+      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SignalRequest" } } }
+    },
+    {
+      "if": { "properties": { "event": { "enum": ["signal/offer", "signal/answer"] } } },
+      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SignalDescription" } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "signal/candidate" } } },
+      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SignalCandidate" } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "control/renew" } } },
+      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ControlEpoch" } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "screen/set" } } },
+      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ScreenSize" } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "clipboard/set" } } },
+      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ClipboardData" } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "keyboard/map" } } },
+      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/KeyboardMap" } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "keyboard/modifiers" } } },
+      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/KeyboardModifiers" } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "chat/message" } } },
+      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ChatMessage" } } }
+    },
+    {
+      "if": { "properties": { "event": { "const": "system/error" } } },
+      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/Error" } } }
+    }
+  ]
+}

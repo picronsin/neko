@@ -5,6 +5,8 @@ The files in this directory are the protocol source of truth:
 - `events.json` defines the WebSocket event names.
 - `errors.json` defines stable error codes returned through `system/error`.
 - `websocket.schema.json` defines the canonical `{event,payload}` envelope.
+- `payloads.schema.json` defines the validated payloads for signaling, control,
+  desktop input, chat, and protocol errors.
 - `media-input.schema.json` defines the binary WebRTC DataChannel input.
 
 Run `go generate ./pkg/protocol` from `server/` after changing the JSON

@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/m1k1o/neko/server/pkg/auth"
+	"github.com/m1k1o/neko/server/pkg/protocol"
 	"github.com/m1k1o/neko/server/pkg/types"
 	"github.com/m1k1o/neko/server/pkg/utils"
 )
@@ -124,8 +125,26 @@ func errorHandler(err error, w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		httpErr = utils.HttpInternalServerError().WithInternalErr(err)
 	}
+	if httpErr.ErrorCode == "" {
+		httpErr.WithErrorCode(defaultErrorCode(httpErr.Code))
+	}
 
 	utils.HttpJsonResponse(w, httpErr.Code, httpErr)
+}
+
+func defaultErrorCode(status int) string {
+	switch status {
+	case http.StatusBadRequest, http.StatusUnprocessableEntity:
+		return string(protocol.InvalidPayload)
+	case http.StatusUnauthorized, http.StatusForbidden:
+		return string(protocol.PermissionDenied)
+	case http.StatusNotFound:
+		return string(protocol.NotFound)
+	case http.StatusConflict:
+		return string(protocol.ControlConflict)
+	default:
+		return string(protocol.InternalError)
+	}
 }
 
 func routeHandler(fn types.RouterHandler) http.HandlerFunc {

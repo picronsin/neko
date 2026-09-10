@@ -13,11 +13,26 @@ func (h *MessageHandlerCtx) systemInit(session types.Session) error {
 	snapshot := h.room.Snapshot(session)
 
 	sessions := map[string]message.SessionData{}
-	for _, current := range snapshot.Sessions {
-		sessions[current.ID] = message.SessionData{
-			ID:      current.ID,
-			Profile: current.Profile,
-			State:   current.State,
+	for _, current := range snapshot.Room.Participants {
+		sessions[current.Session.ID] = message.SessionData{
+			ID: current.Session.ID,
+			Profile: types.MemberProfile{
+				Name:                  current.Member.DisplayName,
+				Avatar:                current.Member.Avatar,
+				IsAdmin:               current.Member.Permission.Admin,
+				CanLogin:              current.Member.Permission.Login,
+				CanConnect:            current.Member.Permission.Connect,
+				CanWatch:              current.Member.Permission.Watch,
+				CanHost:               current.Member.Permission.Host,
+				CanShareMedia:         current.Member.Permission.ShareMedia,
+				CanAccessClipboard:    current.Member.Permission.AccessClipboard,
+				SendsInactiveCursor:   current.Member.Permission.SendInactiveCursor,
+				CanSeeInactiveCursors: current.Member.Permission.SeeInactiveCursors,
+			},
+			State: types.SessionState{
+				IsConnected: current.Session.Connected,
+				IsWatching:  current.Session.Watching,
+			},
 		}
 	}
 
@@ -26,9 +41,9 @@ func (h *MessageHandlerCtx) systemInit(session types.Session) error {
 		message.SystemInit{
 			SessionId: snapshot.SessionID,
 			ControlHost: message.ControlHost{
-				HasHost: snapshot.HasHost,
-				HostID:  snapshot.HostID,
-				Epoch:   snapshot.ControlEpoch,
+				HasHost: snapshot.Room.Control.HolderID != "",
+				HostID:  snapshot.Room.Control.HolderID,
+				Epoch:   snapshot.Room.Control.Epoch,
 			},
 			ScreenSize:        snapshot.ScreenSize,
 			Sessions:          sessions,

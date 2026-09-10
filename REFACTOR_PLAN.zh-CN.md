@@ -271,7 +271,7 @@ server/internal/
 | 里程碑 | 当前代码已具备 | 尚未完成 | 总体状态 |
 | --- | --- | --- | --- |
 | M1：Chromium 性能、认证代理与少端口连通性 | Chromium 运行范围、UDP/TCP MUX、FRP/TURN 配置模板与预检、本地 FRP/Coturn 套件、媒体队列背压、质量 Profile、编码器探测与软件回退、认证 HTTP CONNECT/SOCKS5 代理、WebRTC/浏览器 E2E 入口、指标采集、UI 基础和第一批 SDK 拆分均已有实现；本地 Docker Demo 的 720p/1080p × 1/2/5 直连矩阵已通过 | 尚未完成真实 VAAPI/NVENC 硬件矩阵、Windows/WSL2 跨平台基线、公网 FRP、UDP 受阻 TURN 媒体链路和跨运行指标仪表盘；报告生成依赖本机安装 `jq` | **核心功能和本地直连验收已完成，外部环境验收未完成** |
-| M2：可测试的契约与领域核心 | WebSocket 已统一 `{event,payload}` envelope；`protocol/events.json`、`errors.json`、`websocket.schema.json` 已建立；Go/TypeScript 事件与错误码由生成器同步；服务端 `system/error`、控制 REST `error_code`、envelope 运行时校验和契约测试已接入；信令应用层的 SDP/ICE 已与 Pion 类型解耦 | 尚无按事件拆分的完整 payload schema、OpenAPI 生成的 TypeScript client 和全 API 错误码覆盖；领域服务仍通过 `types.Session`/manager 接口连接现有运行时，房间/成员/权限的纯领域模型和完整契约矩阵仍需抽取 | **协议契约第一批和信令边界已完成，M2 进行中** |
+| M2：可测试的契约与领域核心 | WebSocket 已统一 `{event,payload}` envelope；`protocol/events.json`、`errors.json`、`websocket.schema.json`、`payloads.schema.json` 已建立；Go/TypeScript 事件、错误码和 payload 类型由生成器同步；服务端/客户端 payload 运行时校验、`system/error`、控制 REST `error_code` 和契约测试已接入；信令应用层的 SDP/ICE 已与 Pion 类型解耦；`Room`、`Member`、`Session`、`Permission` transport-neutral 模型已接入房间快照和控制权规则 | OpenAPI 生成的 TypeScript client 尚未接入（等待官方生成器工具）；仍需覆盖所有 REST 错误码、完整事件 payload、领域 repository/port 边界和完整契约矩阵 | **实时契约和第一批领域抽取已完成，M2 进行中** |
 | M3：模块化服务端与持久化 | 已新增 `internal/application`、`control`、`connectivity`、`proxy` 等前置模块；现有内存/文件及 multiuser/file/object/noauth 成员实现仍可运行；旧 legacy 运行时代码已删除 | 尚无完整 `ports/adapters` 边界、PostgreSQL repository、Redis lease/事件总线、OIDC/LDAP、特性开关、完整房间生命周期状态机和审计持久化 | **仅完成前置模块化基础，M3 尚未正式实施** |
 
 因此，当前版本不应将 M1 标记为“发布完成”，也不应将 M2/M3 标记为“全部完成”：M1 进入真实环境验收阶段，M2 已进入生成式契约与领域隔离实施阶段，M3 仍处于架构落地前的准备阶段。
@@ -295,7 +295,7 @@ server/internal/
 - `2d871384`：同步迁移文档、Roadmap、配置生成脚本和开发要求，明确升级时不保留旧运行时分支。
 - 验证：`vue-cli-service lint --no-fix` 与 `vue-cli-service build` 成功（仅有既有 Browserslist、bundle 体积提示）；WSL2 Go 工具链下 `go test ./...` 通过，覆盖完整 config/session/capture 与新增 AV1/H.265 选择逻辑。真实硬件管线仍需在映射 `/dev/dri` 或 `--gpus all` 的目标运行时执行矩阵脚本。
 
-本批次没有改变公网端口号或 MUX 配置语义；服务端重连宽限/去抖已完成。M2 第一批已补齐事件/错误码生成、envelope 运行时校验、WebSocket/REST 稳定错误码，以及 SDP/ICE 的 transport-neutral 适配；下一批补充按事件 payload schema、OpenAPI 生成 client、全 API 错误码覆盖和纯领域模型，不再引入第二套信令 envelope。
+本批次没有改变公网端口号或 MUX 配置语义；服务端重连宽限/去抖已完成。M2 已补齐事件/错误码和关键 payload 生成、双端运行时校验、WebSocket/REST 稳定错误码、SDP/ICE transport-neutral 适配，以及 Room/Member/Session/Permission 第一批纯模型；下一批接入官方 OpenAPI 生成 client、补全事件/REST 错误覆盖和领域 port/repository，不再引入第二套信令 envelope。
 
 本批次增量：实时输入收口已完成，删除 WebSocket 的鼠标、键盘、触摸和快捷键控制事件及对应消息类型，输入统一经 WebRTC DataChannel；控制权申请、释放和管理员操作仍保留在 WebSocket/REST。新增 `ControlService` 统一两类适配器的权限、排队通知、按键复位和管理员接管/转交/重置；DataChannel 输入对 epoch 执行原子校验并续租，过期或旧客户端输入会被拒绝。Go 全量测试、竞态测试、vet、TypeScript SDK 合约测试、类型检查、lint 和生产构建均通过。
 
@@ -347,7 +347,7 @@ M1 的 UI 工作拆为两层：当前先交付不触及媒体链路的视觉与�
 ## 9. 里程碑与成功标准
 
 1. **M1：Chromium 性能、认证代理与单端口连通性（核心实现和本地直连验收已完成，外部验收未完成）**：仅支持 Chromium；默认 UDP MUX、TCP/TURN/FRP 回退、启动预检、带认证的 HTTP CONNECT/SOCKS5 出站代理、媒体背压、质量策略、第一批 UI/SDK 拆分和本地 720p/1080p × 1/2/5 直连矩阵已落地；仍需完成真实硬件、公网网络、Windows/WSL2 跨平台性能矩阵和跨运行指标对比后，才能关闭发布门槛。
-2. **M2：可测试的契约与领域核心（第一批完成，持续实施）**：事件/错误码生成、唯一 WebSocket envelope、运行时校验、WebSocket/REST 稳定错误码、ControlLease、连接状态机、SDP/ICE transport-neutral 适配和第一批应用服务已落地；按事件 payload schema、OpenAPI 生成 client、全 API 契约矩阵和纯领域核心仍未完成。
+2. **M2：可测试的契约与领域核心（持续实施）**：事件/错误码和关键 payload 生成、唯一 WebSocket envelope、双端运行时校验、WebSocket/REST 稳定错误码、ControlLease、连接状态机、SDP/ICE transport-neutral 适配及 Room/Member/Session/Permission 第一批纯模型已落地；OpenAPI 生成 client、完整事件/REST 契约矩阵和领域 port/repository 仍未完成。
 3. **M3：可持久化、可集成认证的模块化后端（尚未正式实施）**：当前保留内存/文件兼容和现有成员认证实现；PostgreSQL、Redis、OIDC/LDAP、特性开关、审计和完整模块边界尚未落地。
 4. **M4：独立客户端 SDK**：在 M1 后段 UI 提取基础上完成跨框架、可独立发布的客户端 SDK；前端框架升级不触及媒体协议，嵌入式集成可复用 SDK。
 5. **M5：按需扩展的房间 Worker**：在多节点环境中安全调度、粘性路由和优雅排空。

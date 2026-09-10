@@ -1,4 +1,5 @@
 import { ProtocolEvent, PROTOCOL_EVENT } from '../protocol/events.generated'
+import { validateProtocolPayload } from '../protocol/validate'
 
 export type SignalingState = 'idle' | 'connecting' | 'open' | 'closing' | 'closed'
 
@@ -38,6 +39,10 @@ export function validateSignalingMessage(value: unknown): SignalingMessage {
     if (message.payload === null || typeof message.payload !== 'object') {
       throw new Error('signaling payload must be an object or array')
     }
+  }
+
+  if ('payload' in message) {
+    validateProtocolPayload(event as ProtocolEvent, message.payload)
   }
 
   return message as unknown as SignalingMessage

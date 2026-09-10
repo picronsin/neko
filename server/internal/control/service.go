@@ -3,6 +3,7 @@ package control
 import (
 	"errors"
 
+	"github.com/m1k1o/neko/server/internal/domain"
 	"github.com/m1k1o/neko/server/pkg/types"
 	"github.com/m1k1o/neko/server/pkg/types/event"
 	"github.com/m1k1o/neko/server/pkg/types/message"
@@ -54,7 +55,13 @@ func (s *Service) Request(session types.Session) (RequestResult, error) {
 	if session.IsHost() {
 		return RequestResult{}, ErrAlreadyHost
 	}
-	if s.sessions.Settings().LockedControls && !session.Profile().IsAdmin {
+	if !domain.CanRequestControl(domain.Member{
+		ID: session.ID(),
+		Permission: domain.Permission{
+			Admin: session.Profile().IsAdmin,
+			Host:  session.Profile().CanHost,
+		},
+	}, s.sessions.Settings().LockedControls, session.PrivateModeEnabled(), false) {
 		return RequestResult{}, ErrNotAllowed
 	}
 
