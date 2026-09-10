@@ -183,8 +183,8 @@ This provider reads the user's credentials from a file. It is useful for small d
     description: "Absolute path to the file containing the users and their passwords.",
   },
   "member.file.hash": {
-    defaultValue: false,
-    description: "Whether the passwords are hashed using sha256 or not.",
+    defaultValue: true,
+    description: "Whether the passwords are stored using bcrypt hashes.",
   },
 }} />
 
@@ -206,7 +206,7 @@ You can leave the file empty and add users later using the HTTP API.
 
   We have two users, `admin` and `user` with their passwords and profiles. `admin` is a regular user, while `user` is an admin.
 
-  Please note that the passwords are stored in plain text. To store them securely, set the `hash` field to `true` in the configuration. After that, the passwords are expected to be hashed using sha256 and base64-encoded. The file will look like this:
+  New passwords are stored using bcrypt-based hashes when `hash` is enabled. Existing plain-text and legacy SHA-256 entries remain readable for migration, but new deployments should keep hashing enabled.
 
   ```json title="members.json"
   {
@@ -245,11 +245,7 @@ You can leave the file empty and add users later using the HTTP API.
   }
   ```
 
-  If you want to hash the passwords, you can use the following command to generate a sha256 base64-encoded hash of the password:
-
-  ```bash
-  echo -n "password" | openssl sha256 -binary | base64 -
-  ```  
+  Existing SHA-256/base64 entries are accepted for backward compatibility and are not required for new users. Create new users through the HTTP API so the server can generate the bcrypt hash.
 </details>
 
 ### Object Provider {#member.object}

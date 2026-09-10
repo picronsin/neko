@@ -136,7 +136,7 @@ func (manager *MemberManagerCtx) Login(username string, password string) (types.
 	manager.loginMu.Lock()
 	defer manager.loginMu.Unlock()
 
-	id, profile, err := manager.provider.Authenticate(username, password)
+	id, profile, err := manager.Authenticate(username, password)
 	if err != nil {
 		return nil, "", err
 	}

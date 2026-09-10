@@ -111,7 +111,8 @@ func (manager *StreamSelectorManagerCtx) GetStream(selector types.StreamSelector
 	if selector.Bitrate != 0 {
 		// select stream by nearest bitrate
 		if selector.Type == types.StreamSelectorTypeNearest {
-			return manager.nearestBitrate(selector.Bitrate), true
+			stream := manager.nearestBitrate(selector.Bitrate)
+			return stream, stream != nil
 		}
 
 		// select lower stream
@@ -193,6 +194,9 @@ func (manager *StreamSelectorManagerCtx) nearestBitrate(bitrate uint64) types.St
 
 	// no streams available
 	if len(diffs) == 0 {
+		if len(manager.streamIDs) == 0 {
+			return nil
+		}
 		// return first (lowest) stream
 		return manager.streams[manager.streamIDs[0]]
 	}

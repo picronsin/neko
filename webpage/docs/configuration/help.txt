@@ -30,7 +30,7 @@
       --desktop.screen string                         default screen size and framerate (default "1280x720@30")
       --desktop.unminimize                            automatically unminimize window when it is minimized (default true)
       --desktop.upload_drop                           whether drop upload is enabled (default true)
-      --member.file.hash                              member file provider: whether the passwords are hashed using sha256 or not (recommended) (default true)
+      --member.file.hash                              member file provider: whether the passwords are hashed using bcrypt or stored as legacy plaintext (default true)
       --member.file.path string                       member file provider: path to the file containing the users and their passwords
       --member.multiuser.admin_password string        member multiuser provider: password for admin users (default "admin")
       --member.multiuser.admin_profile string         member multiuser provider: profile template for admin users (default "{}")

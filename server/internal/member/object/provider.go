@@ -1,6 +1,7 @@
 package object
 
 import (
+	memberpassword "github.com/m1k1o/neko/server/internal/member/password"
 	"github.com/m1k1o/neko/server/pkg/types"
 )
 
@@ -39,7 +40,6 @@ func (provider *MemberProviderCtx) Authenticate(username string, password string
 		return "", types.MemberProfile{}, types.ErrMemberDoesNotExist
 	}
 
-	// TODO: Use hash function.
 	if !entry.CheckPassword(password) {
 		return "", types.MemberProfile{}, types.ErrMemberInvalidPassword
 	}
@@ -56,9 +56,13 @@ func (provider *MemberProviderCtx) Insert(username string, password string, prof
 		return "", types.ErrMemberAlreadyExists
 	}
 
+	hashedPassword, err := memberpassword.Hash(password)
+	if err != nil {
+		return "", err
+	}
+
 	provider.entries[id] = &memberEntry{
-		// TODO: Use hash function.
-		password: password,
+		password: hashedPassword,
 		profile:  profile,
 	}
 
@@ -82,8 +86,11 @@ func (provider *MemberProviderCtx) UpdatePassword(id string, password string) er
 		return types.ErrMemberDoesNotExist
 	}
 
-	// TODO: Use hash function.
-	entry.password = password
+	hashedPassword, err := memberpassword.Hash(password)
+	if err != nil {
+		return err
+	}
+	entry.password = hashedPassword
 
 	return nil
 }

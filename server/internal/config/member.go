@@ -33,7 +33,7 @@ func (Member) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().Bool("member.file.hash", true, "member file provider: whether the passwords are hashed using sha256 or not (recommended)")
+	cmd.PersistentFlags().Bool("member.file.hash", true, "member file provider: whether the passwords are hashed using bcrypt or stored as legacy plaintext")
 	if err := viper.BindPFlag("member.file.hash", cmd.PersistentFlags().Lookup("member.file.hash")); err != nil {
 		return err
 	}

@@ -343,7 +343,7 @@
     ],
     "type": "boolean",
     "defaultValue": "true",
-    "description": "member file provider: whether the passwords are hashed using sha256 or not (recommended)"
+    "description": "member file provider: whether the passwords are hashed using bcrypt or stored as legacy plaintext"
   },
   {
     "key": [

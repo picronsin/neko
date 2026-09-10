@@ -82,6 +82,7 @@ type SessionManagerCtx struct {
 	tokens     map[string]string
 	sessions   map[string]*SessionCtx
 	sessionsMu sync.Mutex
+	persistMu  sync.Mutex
 	avatars    map[string]string
 	avatarsMu  sync.Mutex
 
@@ -285,9 +286,8 @@ func (manager *SessionManagerCtx) isHost(host types.Session) bool {
 }
 
 func (manager *SessionManagerCtx) avatarKey(profile types.MemberProfile, id string) string {
-	if name := strings.TrimSpace(profile.Name); name != "" {
-		return name
-	}
+	// Display names are mutable and not unique. Use the stable member/session
+	// ID for new writes so users with the same name cannot overwrite avatars.
 	return id
 }
 
@@ -295,6 +295,13 @@ func (manager *SessionManagerCtx) withStoredAvatar(profile types.MemberProfile, 
 	key := manager.avatarKey(profile, id)
 	manager.avatarsMu.Lock()
 	avatar, ok := manager.avatars[key]
+	if !ok {
+		// Read legacy name-keyed entries once so existing avatar files continue
+		// to work after switching to stable IDs.
+		if name := strings.TrimSpace(profile.Name); name != "" {
+			avatar, ok = manager.avatars[name]
+		}
+	}
 	manager.avatarsMu.Unlock()
 	if ok {
 		profile.Avatar = avatar
@@ -309,12 +316,12 @@ func (manager *SessionManagerCtx) storeAvatar(profile types.MemberProfile, id st
 
 	key := manager.avatarKey(profile, id)
 	manager.avatarsMu.Lock()
+	defer manager.avatarsMu.Unlock()
 	manager.avatars[key] = profile.Avatar
 	avatars := make(map[string]string, len(manager.avatars))
 	for storedKey, avatar := range manager.avatars {
 		avatars[storedKey] = avatar
 	}
-	manager.avatarsMu.Unlock()
 
 	data, err := json.Marshal(avatars)
 	if err != nil {

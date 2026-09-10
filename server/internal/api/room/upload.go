@@ -2,9 +2,10 @@ package room
 
 import (
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 
 	"github.com/m1k1o/neko/server/pkg/utils"
@@ -12,15 +13,53 @@ import (
 
 // TODO: Extract file uploading to custom utility.
 
-// maximum upload size of 32 MB
+// multipartFormMaxMemory controls how much of the form is kept in memory.
 const multipartFormMaxMemory = 32 << 20
+
+// multipartFormMaxSize is the hard request-body limit. ParseMultipartForm's
+// maxMemory argument alone does not limit the total amount written to disk.
+const multipartFormMaxSize = 32 << 20
+
+func parseUploadForm(w http.ResponseWriter, r *http.Request) error {
+	r.Body = http.MaxBytesReader(w, r.Body, multipartFormMaxSize)
+	return r.ParseMultipartForm(multipartFormMaxMemory)
+}
+
+func writeUploadedFile(dir string, header *multipart.FileHeader) (string, error) {
+	filename := filepath.Base(header.Filename)
+	if filename == "." || filename == string(filepath.Separator) || filename == "" {
+		return "", os.ErrInvalid
+	}
+
+	target := filepath.Join(dir, filename)
+	srcFile, err := header.Open()
+	if err != nil {
+		return "", err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return "", err
+	}
+
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		_ = dstFile.Close()
+		return "", err
+	}
+	if err := dstFile.Close(); err != nil {
+		return "", err
+	}
+
+	return target, nil
+}
 
 func (h *RoomHandler) uploadDrop(w http.ResponseWriter, r *http.Request) error {
 	if !h.desktop.IsUploadDropEnabled() {
 		return utils.HttpBadRequest("upload drop is disabled")
 	}
 
-	err := r.ParseMultipartForm(multipartFormMaxMemory)
+	err := parseUploadForm(w, r)
 	if err != nil {
 		return utils.HttpBadRequest("failed to parse multipart form").WithInternalErr(err)
 	}
@@ -49,37 +88,18 @@ func (h *RoomHandler) uploadDrop(w http.ResponseWriter, r *http.Request) error {
 			WithInternalErr(err).
 			WithInternalMsg("unable to create temporary directory")
 	}
+	defer os.RemoveAll(dir)
 
 	files := []string{}
 	for _, req_file := range req_files {
-		path := path.Join(dir, req_file.Filename)
-
-		srcFile, err := req_file.Open()
+		filePath, err := writeUploadedFile(dir, req_file)
 		if err != nil {
 			return utils.HttpInternalServerError().
 				WithInternalErr(err).
-				WithInternalMsg("unable to open uploaded file")
+				WithInternalMsg("unable to store uploaded file")
 		}
 
-		defer srcFile.Close()
-
-		dstFile, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			return utils.HttpInternalServerError().
-				WithInternalErr(err).
-				WithInternalMsg("unable to open destination file")
-		}
-
-		defer dstFile.Close()
-
-		_, err = io.Copy(dstFile, srcFile)
-		if err != nil {
-			return utils.HttpInternalServerError().
-				WithInternalErr(err).
-				WithInternalMsg("unable to copy uploaded file to destination file")
-		}
-
-		files = append(files, path)
+		files = append(files, filePath)
 	}
 
 	if !h.desktop.DropFiles(X, Y, files) {
@@ -95,7 +115,7 @@ func (h *RoomHandler) uploadDialogPost(w http.ResponseWriter, r *http.Request) e
 		return utils.HttpBadRequest("file chooser dialog is disabled")
 	}
 
-	err := r.ParseMultipartForm(multipartFormMaxMemory)
+	err := parseUploadForm(w, r)
 	if err != nil {
 		return utils.HttpBadRequest("failed to parse multipart form").WithInternalErr(err)
 	}
@@ -118,33 +138,14 @@ func (h *RoomHandler) uploadDialogPost(w http.ResponseWriter, r *http.Request) e
 			WithInternalErr(err).
 			WithInternalMsg("unable to create temporary directory")
 	}
+	defer os.RemoveAll(dir)
 
 	for _, req_file := range req_files {
-		path := path.Join(dir, req_file.Filename)
-
-		srcFile, err := req_file.Open()
+		_, err := writeUploadedFile(dir, req_file)
 		if err != nil {
 			return utils.HttpInternalServerError().
 				WithInternalErr(err).
-				WithInternalMsg("unable to open uploaded file")
-		}
-
-		defer srcFile.Close()
-
-		dstFile, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			return utils.HttpInternalServerError().
-				WithInternalErr(err).
-				WithInternalMsg("unable to open destination file")
-		}
-
-		defer dstFile.Close()
-
-		_, err = io.Copy(dstFile, srcFile)
-		if err != nil {
-			return utils.HttpInternalServerError().
-				WithInternalErr(err).
-				WithInternalMsg("unable to copy uploaded file to destination file")
+				WithInternalMsg("unable to store uploaded file")
 		}
 	}
 

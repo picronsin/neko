@@ -4,18 +4,26 @@ import (
 	"errors"
 	"fmt"
 
+	memberpassword "github.com/m1k1o/neko/server/internal/member/password"
 	"github.com/m1k1o/neko/server/pkg/types"
 	"github.com/m1k1o/neko/server/pkg/utils"
 )
 
 func New(config Config) types.MemberProvider {
+	adminPassword, _ := memberpassword.Hash(config.AdminPassword)
+	userPassword, _ := memberpassword.Hash(config.UserPassword)
+
 	return &MemberProviderCtx{
-		config: config,
+		config:        config,
+		adminPassword: adminPassword,
+		userPassword:  userPassword,
 	}
 }
 
 type MemberProviderCtx struct {
-	config Config
+	config        Config
+	adminPassword string
+	userPassword  string
 }
 
 func (provider *MemberProviderCtx) Connect() error {
@@ -37,7 +45,7 @@ func (provider *MemberProviderCtx) Authenticate(username string, password string
 	id := fmt.Sprintf("%s-%s", username, token)
 
 	// if logged in as administrator
-	if provider.config.AdminPassword == password {
+	if memberpassword.Verify(provider.adminPassword, password, false) {
 		profile := provider.config.AdminProfile
 		if profile.Name == "" {
 			profile.Name = username
@@ -46,7 +54,7 @@ func (provider *MemberProviderCtx) Authenticate(username string, password string
 	}
 
 	// if logged in as user
-	if provider.config.UserPassword == password {
+	if memberpassword.Verify(provider.userPassword, password, false) {
 		profile := provider.config.UserProfile
 		if profile.Name == "" {
 			profile.Name = username

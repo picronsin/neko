@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path/filepath"
 
 	"github.com/m1k1o/neko/server/pkg/types"
 )
@@ -12,8 +13,13 @@ func (manager *SessionManagerCtx) save() {
 	if manager.config.File == "" {
 		return
 	}
+	manager.persistMu.Lock()
+	defer manager.persistMu.Unlock()
 
-	// serialize sessions
+	// Snapshot sessions while holding the map lock. save is called after the
+	// mutating operation releases sessionsMu, so it must protect this read
+	// itself from concurrent Create/Update/Delete calls.
+	manager.sessionsMu.Lock()
 	sessions := make([]types.SessionProfile, 0, len(manager.sessions))
 	for _, session := range manager.sessions {
 		sessions = append(sessions, types.SessionProfile{
@@ -22,6 +28,7 @@ func (manager *SessionManagerCtx) save() {
 			Profile: session.profile,
 		})
 	}
+	manager.sessionsMu.Unlock()
 
 	// convert to json
 	data, err := json.Marshal(sessions)
@@ -30,12 +37,28 @@ func (manager *SessionManagerCtx) save() {
 		return
 	}
 
-	// write to file
-	err = os.WriteFile(manager.config.File, data, 0644)
+	if err := os.MkdirAll(filepath.Dir(manager.config.File), 0750); err != nil {
+		manager.logger.Error().Err(err).
+			Str("file", manager.config.File).
+			Msg("failed to create session directory")
+		return
+	}
+
+	// Write to a private temporary file and replace the target atomically. This
+	// keeps authentication tokens private and avoids leaving a partially-written
+	// session file after a crash.
+	temporary := manager.config.File + ".tmp"
+	err = os.WriteFile(temporary, data, 0600)
 	if err != nil {
 		manager.logger.Error().Err(err).
 			Str("file", manager.config.File).
-			Msg("failed to write sessions to a file")
+			Msg("failed to write sessions to a temporary file")
+		return
+	}
+	if err := os.Rename(temporary, manager.config.File); err != nil {
+		manager.logger.Error().Err(err).
+			Str("file", manager.config.File).
+			Msg("failed to replace sessions file")
 	}
 }
 
@@ -58,6 +81,11 @@ func (manager *SessionManagerCtx) load() {
 			Str("file", manager.config.File).
 			Msg("failed to read sessions from a file")
 		return
+	}
+	if err := os.Chmod(manager.config.File, 0600); err != nil {
+		manager.logger.Warn().Err(err).
+			Str("file", manager.config.File).
+			Msg("failed to restrict sessions file permissions")
 	}
 
 	// if file is empty

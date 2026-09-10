@@ -13,7 +13,9 @@ export const state = () => ({
   epoch: 0,
   clipboard: '',
   locked: false,
-  implicitHosting: true,
+  // The server sends the effective setting during websocket initialization.
+  // Start conservatively so the pre-init state cannot send host-only messages.
+  implicitHosting: false,
   fileTransfer: true,
   keyboardModifierState: -1,
 })
@@ -71,6 +73,8 @@ export const mutations = mutationTree(state, {
     state.epoch = 0
     state.clipboard = ''
     state.locked = false
+    state.implicitHosting = false
+    state.keyboardModifierState = -1
   },
 })
 
@@ -78,7 +82,10 @@ export const actions = actionTree(
   { state, getters, mutations },
   {
     sendClipboard({ getters }, clipboard: string) {
-      if (!accessor.connection.connected || !getters.hosting) {
+      // Clipboard writes are host-only on the server. In implicit-hosting
+      // mode, `hosting` means that input may request control, not that this
+      // session already owns it.
+      if (!accessor.connection.connected || !getters.controlling) {
         return
       }
 
@@ -162,7 +169,7 @@ export const actions = actionTree(
     },
 
     changeKeyboard({ getters }) {
-      if (!accessor.connection.connected || !getters.hosting) {
+      if (!accessor.connection.connected || !getters.controlling) {
         return
       }
 
@@ -170,6 +177,12 @@ export const actions = actionTree(
     },
 
     syncKeyboardModifierState({ state }, { capsLock, numLock, scrollLock }) {
+      // The websocket handler rejects this event for viewers. It is common
+      // for the pointer to enter the video before control negotiation ends.
+      if (!accessor.connection.connected || !accessor.remote.controlling) {
+        return
+      }
+
       if (state.keyboardModifierState === keyboardModifierState(capsLock, numLock, scrollLock)) {
         return
       }

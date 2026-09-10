@@ -1,12 +1,11 @@
 package file
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"io"
 	"os"
 
+	memberpassword "github.com/m1k1o/neko/server/internal/member/password"
 	"github.com/m1k1o/neko/server/pkg/types"
 )
 
@@ -26,10 +25,11 @@ func (provider *MemberProviderCtx) hash(password string) string {
 		return password
 	}
 
-	sha256 := sha256.New()
-	sha256.Write([]byte(password))
-	hashedPassword := sha256.Sum(nil)
-	return base64.StdEncoding.EncodeToString(hashedPassword)
+	hashedPassword, err := memberpassword.Hash(password)
+	if err != nil {
+		return ""
+	}
+	return hashedPassword
 }
 
 func (provider *MemberProviderCtx) Connect() error {
@@ -49,7 +49,7 @@ func (provider *MemberProviderCtx) Authenticate(username string, password string
 		return "", types.MemberProfile{}, err
 	}
 
-	if entry.Password != provider.hash(password) {
+	if !memberpassword.Verify(entry.Password, password, !provider.config.Hash) {
 		return "", types.MemberProfile{}, types.ErrMemberInvalidPassword
 	}
 
@@ -158,10 +158,14 @@ func (provider *MemberProviderCtx) Delete(id string) error {
 }
 
 func (provider *MemberProviderCtx) deserialize() (map[string]MemberEntry, error) {
-	file, err := os.OpenFile(provider.config.Path, os.O_RDONLY|os.O_CREATE, os.ModePerm)
+	file, err := os.OpenFile(provider.config.Path, os.O_RDONLY|os.O_CREATE, 0600)
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
+	// Tighten permissions for files created by older versions or with a broad
+	// process umask. Ignore chmod errors for read-only deployments.
+	_ = file.Chmod(0600)
 
 	raw, err := io.ReadAll(file)
 	if err != nil {
@@ -200,5 +204,10 @@ func (provider *MemberProviderCtx) serialize(data map[string]MemberEntry) error 
 		return err
 	}
 
-	return os.WriteFile(provider.config.Path, raw, os.ModePerm)
+	temporary := provider.config.Path + ".tmp"
+	if err := os.WriteFile(temporary, raw, 0600); err != nil {
+		return err
+	}
+
+	return os.Rename(temporary, provider.config.Path)
 }

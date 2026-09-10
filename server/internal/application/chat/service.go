@@ -111,9 +111,11 @@ func (s *Service) append(message Message) {
 		s.history = append([]Message(nil), s.history[len(s.history)-s.limit:]...)
 	}
 	history := History{Messages: append([]Message(nil), s.history...)}
-	s.mu.Unlock()
-
+	// Keep the history lock while persisting the snapshot. Otherwise concurrent
+	// sends can save snapshots out of order and an older snapshot can overwrite
+	// a newer one on disk.
 	s.save(history)
+	s.mu.Unlock()
 }
 
 func (s *Service) messages() []Message {
