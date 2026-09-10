@@ -241,6 +241,10 @@ paths:
           description: Avatar updated successfully.
         '400':
           description: Invalid or oversized avatar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -1238,6 +1242,10 @@ components:
   schemas:
     ErrorMessage:
       type: object
+      required:
+        - code
+        - message
+        - error_code
       properties:
         code:
           type: integer
