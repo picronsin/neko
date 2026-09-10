@@ -35,9 +35,10 @@ While a session holds control, the client periodically sends
 `control/renew` with the current epoch. The server renews the lease only for
 the current holder; an old session or stale epoch cannot keep ownership alive.
 
-The generated TypeScript payload interfaces are in
-`client/src/protocol/payloads.generated.ts`. The generated REST client is
-created from `server/openapi.yaml` with:
+The generated Go payload structs are in
+`server/pkg/protocol/payloads_generated.go`; the TypeScript payload interfaces
+are in `client/src/protocol/payloads.generated.ts`. The generated REST client
+is created from `server/openapi.yaml` with:
 
 ```bash
 cd client

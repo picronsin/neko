@@ -1,13 +1,8 @@
 package protocol
 
 // ErrorPayload is sent as system/error when a command cannot be completed.
-// Code is stable for clients; Message is diagnostic and may change.
-type ErrorPayload struct {
-	Title     string    `json:"title"`
-	Code      ErrorCode `json:"code"`
-	Message   string    `json:"message"`
-	Retryable bool      `json:"retryable"`
-}
+// Its fields are generated from protocol/payloads.schema.json.
+type ErrorPayload = ProtocolErrorPayload
 
 func NewError(code ErrorCode, message string) ErrorPayload {
 	return ErrorPayload{
