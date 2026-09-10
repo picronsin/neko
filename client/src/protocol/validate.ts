@@ -367,7 +367,7 @@ export function validateProtocolPayload(event: ProtocolEvent, payload: unknown) 
       requiredString(value, event, 'session_id')
       const controlHost = objectPayload(event, value.control_host)
       rejectUnknown(controlHost, event, ['id', 'has_host', 'host_id', 'epoch'])
-      requiredString(controlHost, event, 'id')
+      requiredString(controlHost, event, 'id', true)
       requiredBoolean(controlHost, event, 'has_host')
       requiredNumber(controlHost, event, 'epoch')
       if ('host_id' in controlHost && typeof controlHost.host_id !== 'string') {
