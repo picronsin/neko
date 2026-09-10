@@ -347,7 +347,7 @@ M1 的 UI 工作拆为两层：当前先交付不触及媒体链路的视觉与�
 ## 9. 里程碑与成功标准
 
 1. **M1：Chromium 性能、认证代理与单端口连通性（核心实现和本地直连验收已完成，外部验收未完成）**：仅支持 Chromium；默认 UDP MUX、TCP/TURN/FRP 回退、启动预检、带认证的 HTTP CONNECT/SOCKS5 出站代理、媒体背压、质量策略、第一批 UI/SDK 拆分和本地 720p/1080p × 1/2/5 直连矩阵已落地；仍需完成真实硬件、公网网络、Windows/WSL2 跨平台性能矩阵和跨运行指标对比后，才能关闭发布门槛。
-2. **M2：可测试的契约与领域核心（持续实施）**：事件/错误码和关键 payload 生成、唯一 WebSocket envelope、双端运行时校验、WebSocket/REST 稳定错误码、ControlLease、连接状态机、SDP/ICE transport-neutral 适配及 Room/Member/Session/Permission 第一批纯模型已落地；OpenAPI 生成 client、完整事件/REST 契约矩阵和领域 port/repository 仍未完成。
+2. **M2：可测试的契约与领域核心（持续实施）**：事件/错误码和完整 payload 生成、唯一 WebSocket envelope、双端运行时校验、事件矩阵生成校验、WebSocket/REST 稳定错误码、ControlLease、连接状态机、SDP/ICE transport-neutral 适配及 Room/Member/Session/Permission 纯模型和 repository/port 适配器已落地；OpenAPI 生成 client、REST 操作级契约接入和真实协议互操作验证仍未完成。
 3. **M3：可持久化、可集成认证的模块化后端（尚未正式实施）**：当前保留内存/文件兼容和现有成员认证实现；PostgreSQL、Redis、OIDC/LDAP、特性开关、审计和完整模块边界尚未落地。
 4. **M4：独立客户端 SDK**：在 M1 后段 UI 提取基础上完成跨框架、可独立发布的客户端 SDK；前端框架升级不触及媒体协议，嵌入式集成可复用 SDK。
 5. **M5：按需扩展的房间 Worker**：在多节点环境中安全调度、粘性路由和优雅排空。
