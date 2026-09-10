@@ -1,7 +1,9 @@
+import { ProtocolEvent, PROTOCOL_EVENT } from '../protocol/events.generated'
+
 export type SignalingState = 'idle' | 'connecting' | 'open' | 'closing' | 'closed'
 
 export interface SignalingMessage {
-  event: string
+  event: ProtocolEvent
   /** Canonical server envelope: every payload is nested under `payload`. */
   payload?: unknown
 }
@@ -24,6 +26,9 @@ export function validateSignalingMessage(value: unknown): SignalingMessage {
   const event = message.event as string
   if (event.trim() === '') {
     throw new Error('signaling message event is required')
+  }
+  if (!Object.values(PROTOCOL_EVENT).includes(event as ProtocolEvent)) {
+    throw new Error(`unknown signaling event '${event}'`)
   }
   if (Object.keys(message).some((key) => key !== 'event' && key !== 'payload')) {
     throw new Error('signaling message contains unsupported top-level fields')
