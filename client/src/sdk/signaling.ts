@@ -41,9 +41,7 @@ export function validateSignalingMessage(value: unknown): SignalingMessage {
     }
   }
 
-  if ('payload' in message) {
-    validateProtocolPayload(event as ProtocolEvent, message.payload)
-  }
+  validateProtocolPayload(event as ProtocolEvent, message.payload)
 
   return message as unknown as SignalingMessage
 }

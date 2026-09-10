@@ -10,7 +10,91 @@
     "event": { "type": "string" },
     "payload": {}
   },
+  "x-no-payload-events": [
+    "system/heartbeat",
+    "client/heartbeat",
+    "signal/close",
+    "control/release"
+  ],
   "$defs": {
+    "SystemInit": {
+      "type": "object",
+      "required": ["session_id", "control_host", "screen_size", "sessions", "settings", "touch_events", "screencast_enabled", "webrtc"],
+      "properties": {
+        "session_id": { "type": "string" },
+        "control_host": { "$ref": "#/$defs/ControlHost" },
+        "screen_size": { "$ref": "#/$defs/ScreenSize" },
+        "sessions": { "type": "object", "additionalProperties": { "$ref": "#/$defs/SessionData" } },
+        "settings": { "$ref": "#/$defs/Settings" },
+        "touch_events": { "type": "boolean" },
+        "screencast_enabled": { "type": "boolean" },
+        "webrtc": { "$ref": "#/$defs/SystemWebRTC" }
+      },
+      "additionalProperties": false
+    },
+    "SystemWebRTC": {
+      "type": "object",
+      "required": ["videos"],
+      "properties": { "videos": { "type": "array", "items": { "type": "string" } } },
+      "additionalProperties": false
+    },
+    "SystemAdmin": {
+      "type": "object",
+      "required": ["broadcast_status"],
+      "properties": { "broadcast_status": { "$ref": "#/$defs/BroadcastStatus" } },
+      "additionalProperties": false
+    },
+    "SystemSettingsUpdate": {
+      "type": "object",
+      "required": ["id", "private_mode", "locked_logins", "locked_controls", "control_protection", "implicit_hosting", "inactive_cursors", "merciful_reconnect", "heartbeat_interval", "control_lease_ttl", "plugins"],
+      "properties": {
+        "id": { "type": "string" },
+        "private_mode": { "type": "boolean" },
+        "locked_logins": { "type": "boolean" },
+        "locked_controls": { "type": "boolean" },
+        "control_protection": { "type": "boolean" },
+        "implicit_hosting": { "type": "boolean" },
+        "inactive_cursors": { "type": "boolean" },
+        "merciful_reconnect": { "type": "boolean" },
+        "heartbeat_interval": { "type": "integer", "minimum": 0 },
+        "control_lease_ttl": { "type": "integer", "minimum": 0 },
+        "plugins": { "type": ["object", "null"], "additionalProperties": true }
+      },
+      "additionalProperties": false
+    },
+    "Settings": {
+      "type": "object",
+      "required": ["private_mode", "locked_logins", "locked_controls", "control_protection", "implicit_hosting", "inactive_cursors", "merciful_reconnect", "heartbeat_interval", "control_lease_ttl", "plugins"],
+      "properties": {
+        "private_mode": { "type": "boolean" },
+        "locked_logins": { "type": "boolean" },
+        "locked_controls": { "type": "boolean" },
+        "control_protection": { "type": "boolean" },
+        "implicit_hosting": { "type": "boolean" },
+        "inactive_cursors": { "type": "boolean" },
+        "merciful_reconnect": { "type": "boolean" },
+        "heartbeat_interval": { "type": "integer", "minimum": 0 },
+        "control_lease_ttl": { "type": "integer", "minimum": 0 },
+        "plugins": { "type": ["object", "null"], "additionalProperties": true }
+      },
+      "additionalProperties": false
+    },
+    "SystemLog": {
+      "type": "object",
+      "required": ["level", "fields", "message"],
+      "properties": {
+        "level": { "type": "string" },
+        "fields": { "type": "object", "additionalProperties": true },
+        "message": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "SystemDisconnect": {
+      "type": "object",
+      "required": ["message"],
+      "properties": { "message": { "type": "string" } },
+      "additionalProperties": false
+    },
     "SignalRequest": {
       "type": "object",
       "properties": {
@@ -25,13 +109,23 @@
       "properties": {
         "disabled": { "type": "boolean" },
         "auto": { "type": "boolean" },
-        "selector": { "type": "object", "additionalProperties": true }
+        "selector": { "$ref": "#/$defs/StreamSelector" }
       },
       "additionalProperties": false
     },
     "PeerAudioRequest": {
       "type": "object",
       "properties": { "disabled": { "type": "boolean" } },
+      "additionalProperties": false
+    },
+    "StreamSelector": {
+      "type": "object",
+      "required": ["type", "id", "bitrate"],
+      "properties": {
+        "type": { "type": "string", "enum": ["exact", "nearest", "lower", "higher"] },
+        "id": { "type": "string" },
+        "bitrate": { "type": "integer", "minimum": 0 }
+      },
       "additionalProperties": false
     },
     "SignalDescription": {
@@ -51,6 +145,151 @@
       },
       "additionalProperties": false
     },
+    "SignalProvide": {
+      "type": "object",
+      "required": ["sdp", "iceservers", "video", "audio"],
+      "properties": {
+        "sdp": { "type": "string", "minLength": 1 },
+        "iceservers": { "type": "array", "items": { "$ref": "#/$defs/ICEServer" } },
+        "video": { "$ref": "#/$defs/PeerVideo" },
+        "audio": { "$ref": "#/$defs/PeerAudio" }
+      },
+      "additionalProperties": false
+    },
+    "ICEServer": {
+      "type": "object",
+      "required": ["urls"],
+      "properties": {
+        "urls": { "type": "array", "items": { "type": "string" } },
+        "username": { "type": "string" },
+        "credential": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "PeerVideo": {
+      "type": "object",
+      "required": ["disabled", "id", "auto"],
+      "properties": {
+        "disabled": { "type": "boolean" },
+        "id": { "type": "string" },
+        "auto": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "PeerAudio": {
+      "type": "object",
+      "required": ["disabled"],
+      "properties": { "disabled": { "type": "boolean" } },
+      "additionalProperties": false
+    },
+    "MemberProfile": {
+      "type": "object",
+      "required": ["name", "is_admin", "can_login", "can_connect", "can_watch", "can_host", "can_share_media", "can_access_clipboard", "sends_inactive_cursor", "can_see_inactive_cursors", "plugins"],
+      "properties": {
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "is_admin": { "type": "boolean" },
+        "can_login": { "type": "boolean" },
+        "can_connect": { "type": "boolean" },
+        "can_watch": { "type": "boolean" },
+        "can_host": { "type": "boolean" },
+        "can_share_media": { "type": "boolean" },
+        "can_access_clipboard": { "type": "boolean" },
+        "sends_inactive_cursor": { "type": "boolean" },
+        "can_see_inactive_cursors": { "type": "boolean" },
+        "plugins": { "type": ["object", "null"], "additionalProperties": true }
+      },
+      "additionalProperties": false
+    },
+    "SessionState": {
+      "type": "object",
+      "required": ["is_connected", "is_watching"],
+      "properties": {
+        "is_connected": { "type": "boolean" },
+        "connected_since": { "type": ["string", "null"], "format": "date-time" },
+        "not_connected_since": { "type": ["string", "null"], "format": "date-time" },
+        "is_watching": { "type": "boolean" },
+        "watching_since": { "type": ["string", "null"], "format": "date-time" },
+        "not_watching_since": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "SessionData": {
+      "type": "object",
+      "required": ["id", "profile", "state"],
+      "properties": {
+        "id": { "type": "string" },
+        "profile": { "$ref": "#/$defs/MemberProfile" },
+        "state": { "$ref": "#/$defs/SessionState" }
+      },
+      "additionalProperties": false
+    },
+    "SessionID": {
+      "type": "object",
+      "required": ["id"],
+      "properties": { "id": { "type": "string" } },
+      "additionalProperties": false
+    },
+    "SessionProfileUpdate": {
+      "type": "object",
+      "required": ["id", "name", "is_admin", "can_login", "can_connect", "can_watch", "can_host", "can_share_media", "can_access_clipboard", "sends_inactive_cursor", "can_see_inactive_cursors", "plugins"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "is_admin": { "type": "boolean" },
+        "can_login": { "type": "boolean" },
+        "can_connect": { "type": "boolean" },
+        "can_watch": { "type": "boolean" },
+        "can_host": { "type": "boolean" },
+        "can_share_media": { "type": "boolean" },
+        "can_access_clipboard": { "type": "boolean" },
+        "sends_inactive_cursor": { "type": "boolean" },
+        "can_see_inactive_cursors": { "type": "boolean" },
+        "plugins": { "type": ["object", "null"], "additionalProperties": true }
+      },
+      "additionalProperties": false
+    },
+    "SessionStateUpdate": {
+      "type": "object",
+      "required": ["id", "is_connected", "is_watching"],
+      "properties": {
+        "id": { "type": "string" },
+        "is_connected": { "type": "boolean" },
+        "connected_since": { "type": ["string", "null"], "format": "date-time" },
+        "not_connected_since": { "type": ["string", "null"], "format": "date-time" },
+        "is_watching": { "type": "boolean" },
+        "watching_since": { "type": ["string", "null"], "format": "date-time" },
+        "not_watching_since": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "Cursor": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": { "x": { "type": "integer" }, "y": { "type": "integer" } },
+      "additionalProperties": false
+    },
+    "SessionCursors": {
+      "type": "object",
+      "required": ["id", "cursors"],
+      "properties": {
+        "id": { "type": "string" },
+        "cursors": { "type": "array", "items": { "$ref": "#/$defs/Cursor" } }
+      },
+      "additionalProperties": false
+    },
+    "ControlHost": {
+      "type": "object",
+      "required": ["id", "has_host", "epoch"],
+      "properties": {
+        "id": { "type": "string" },
+        "has_host": { "type": "boolean" },
+        "host_id": { "type": "string" },
+        "epoch": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
     "ControlEpoch": {
       "type": "object",
       "required": ["epoch"],
@@ -67,6 +306,17 @@
       },
       "additionalProperties": false
     },
+    "ScreenSizeUpdate": {
+      "type": "object",
+      "required": ["id", "width", "height", "rate"],
+      "properties": {
+        "id": { "type": "string" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "rate": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
     "ClipboardData": {
       "type": "object",
       "required": ["text"],
@@ -75,11 +325,8 @@
     },
     "KeyboardMap": {
       "type": "object",
-      "required": ["layout"],
-      "properties": {
-        "layout": { "type": "string", "minLength": 1 },
-        "variant": { "type": "string" }
-      },
+      "required": ["layout", "variant"],
+      "properties": { "layout": { "type": "string", "minLength": 1 }, "variant": { "type": "string" } },
       "additionalProperties": false
     },
     "KeyboardModifiers": {
@@ -96,7 +343,79 @@
       },
       "additionalProperties": false
     },
+    "BroadcastStatus": {
+      "type": "object",
+      "required": ["is_active"],
+      "properties": { "is_active": { "type": "boolean" }, "url": { "type": "string" } },
+      "additionalProperties": false
+    },
+    "SendUnicast": {
+      "type": "object",
+      "required": ["sender", "receiver", "subject", "body"],
+      "properties": { "sender": { "type": "string" }, "receiver": { "type": "string" }, "subject": { "type": "string" }, "body": {} },
+      "additionalProperties": false
+    },
+    "SendBroadcast": {
+      "type": "object",
+      "required": ["sender", "subject", "body"],
+      "properties": { "sender": { "type": "string" }, "subject": { "type": "string" }, "body": {} },
+      "additionalProperties": false
+    },
+    "ChatContent": {
+      "type": "object",
+      "required": ["text"],
+      "properties": { "text": { "type": "string" } },
+      "additionalProperties": false
+    },
     "ChatMessage": {
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "id": { "type": "string" },
+        "created": { "type": "string", "format": "date-time" },
+        "content": { "$ref": "#/$defs/ChatContent" },
+        "name": { "type": "string" },
+        "avatar": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ChatInit": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": { "enabled": { "type": "boolean" }, "history": { "type": "array", "items": { "$ref": "#/$defs/ChatHistoryMessage" } } },
+      "additionalProperties": false
+    },
+    "ChatHistoryMessage": {
+      "type": "object",
+      "required": ["id", "created", "content"],
+      "properties": { "id": { "type": "string" }, "created": { "type": "string", "format": "date-time" }, "content": { "$ref": "#/$defs/ChatContent" }, "name": { "type": "string" }, "avatar": { "type": "string" } },
+      "additionalProperties": false
+    },
+    "ChatEmote": {
+      "type": "object",
+      "required": ["id", "emote"],
+      "properties": { "id": { "type": "string" }, "emote": { "type": "string" } },
+      "additionalProperties": false
+    },
+    "FileTransferItem": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": { "name": { "type": "string" }, "type": { "type": "string", "enum": ["file", "dir"] }, "size": { "type": "integer", "minimum": 0 } },
+      "additionalProperties": false
+    },
+    "FileTransferUpdate": {
+      "type": "object",
+      "required": ["enabled", "root_dir", "user_download", "user_upload", "user_delete", "files"],
+      "properties": { "enabled": { "type": "boolean" }, "root_dir": { "type": "string" }, "user_download": { "type": "boolean" }, "user_upload": { "type": "boolean" }, "user_delete": { "type": "boolean" }, "files": { "type": "array", "items": { "$ref": "#/$defs/FileTransferItem" } } },
+      "additionalProperties": false
+    },
+    "OpenInAppInit": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": { "enabled": { "type": "boolean" } },
+      "additionalProperties": false
+    },
+    "OpenInAppLink": {
       "type": "object",
       "required": ["text"],
       "properties": { "text": { "type": "string", "minLength": 1 } },
@@ -105,55 +424,51 @@
     "Error": {
       "type": "object",
       "required": ["title", "code", "message", "retryable"],
-      "properties": {
-        "title": { "type": "string" },
-        "code": { "type": "string" },
-        "message": { "type": "string" },
-        "retryable": { "type": "boolean" }
-      },
+      "properties": { "title": { "type": "string" }, "code": { "type": "string" }, "message": { "type": "string" }, "retryable": { "type": "boolean" } },
+      "additionalProperties": false
+    },
+    "SystemWebRTC": {
+      "type": "object",
+      "required": ["videos"],
+      "properties": { "videos": { "type": "array", "items": { "type": "string" } } },
       "additionalProperties": false
     }
   },
   "allOf": [
-    {
-      "if": { "properties": { "event": { "const": "signal/request" } } },
-      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SignalRequest" } } }
-    },
-    {
-      "if": { "properties": { "event": { "enum": ["signal/offer", "signal/answer"] } } },
-      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SignalDescription" } } }
-    },
-    {
-      "if": { "properties": { "event": { "const": "signal/candidate" } } },
-      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SignalCandidate" } } }
-    },
-    {
-      "if": { "properties": { "event": { "const": "control/renew" } } },
-      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ControlEpoch" } } }
-    },
-    {
-      "if": { "properties": { "event": { "const": "screen/set" } } },
-      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ScreenSize" } } }
-    },
-    {
-      "if": { "properties": { "event": { "const": "clipboard/set" } } },
-      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ClipboardData" } } }
-    },
-    {
-      "if": { "properties": { "event": { "const": "keyboard/map" } } },
-      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/KeyboardMap" } } }
-    },
-    {
-      "if": { "properties": { "event": { "const": "keyboard/modifiers" } } },
-      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/KeyboardModifiers" } } }
-    },
-    {
-      "if": { "properties": { "event": { "const": "chat/message" } } },
-      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ChatMessage" } } }
-    },
-    {
-      "if": { "properties": { "event": { "const": "system/error" } } },
-      "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/Error" } } }
-    }
+    { "if": { "properties": { "event": { "const": "system/init" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SystemInit" } } } },
+    { "if": { "properties": { "event": { "const": "system/admin" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SystemAdmin" } } } },
+    { "if": { "properties": { "event": { "const": "system/settings" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SystemSettingsUpdate" } } } },
+    { "if": { "properties": { "event": { "const": "system/logs" } } }, "then": { "required": ["payload"], "properties": { "payload": { "type": "array", "items": { "$ref": "#/$defs/SystemLog" } } } } },
+    { "if": { "properties": { "event": { "const": "system/disconnect" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SystemDisconnect" } } } },
+    { "if": { "properties": { "event": { "const": "system/error" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/Error" } } } },
+    { "if": { "properties": { "event": { "const": "signal/request" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SignalRequest" } } } },
+    { "if": { "properties": { "event": { "const": "signal/restart" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/SignalDescription" } } } },
+    { "if": { "properties": { "event": { "enum": ["signal/offer", "signal/answer"] } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SignalDescription" } } } },
+    { "if": { "properties": { "event": { "const": "signal/provide" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SignalProvide" } } } },
+    { "if": { "properties": { "event": { "const": "signal/candidate" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SignalCandidate" } } } },
+    { "if": { "properties": { "event": { "enum": ["signal/video", "signal/audio"] } } }, "then": { "required": ["payload"], "properties": { "payload": { "type": "object" } } } },
+    { "if": { "properties": { "event": { "const": "session/created" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SessionData" } } } },
+    { "if": { "properties": { "event": { "const": "session/deleted" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SessionID" } } } },
+    { "if": { "properties": { "event": { "const": "session/profile" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SessionProfileUpdate" } } } },
+    { "if": { "properties": { "event": { "const": "session/state" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SessionStateUpdate" } } } },
+    { "if": { "properties": { "event": { "const": "session/cursors" } } }, "then": { "required": ["payload"], "properties": { "payload": { "type": "array", "items": { "$ref": "#/$defs/SessionCursors" } } } } },
+    { "if": { "properties": { "event": { "const": "control/host" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ControlHost" } } } },
+    { "if": { "properties": { "event": { "const": "control/request" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/SessionID" } } } },
+    { "if": { "properties": { "event": { "const": "control/renew" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ControlEpoch" } } } },
+    { "if": { "properties": { "event": { "const": "screen/updated" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ScreenSizeUpdate" } } } },
+    { "if": { "properties": { "event": { "const": "screen/set" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ScreenSize" } } } },
+    { "if": { "properties": { "event": { "enum": ["clipboard/updated", "clipboard/set"] } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ClipboardData" } } } },
+    { "if": { "properties": { "event": { "const": "keyboard/map" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/KeyboardMap" } } } },
+    { "if": { "properties": { "event": { "const": "keyboard/modifiers" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/KeyboardModifiers" } } } },
+    { "if": { "properties": { "event": { "const": "broadcast/status" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/BroadcastStatus" } } } },
+    { "if": { "properties": { "event": { "const": "send/unicast" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SendUnicast" } } } },
+    { "if": { "properties": { "event": { "const": "send/broadcast" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SendBroadcast" } } } },
+    { "if": { "properties": { "event": { "enum": ["file_chooser_dialog/opened", "file_chooser_dialog/closed"] } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SessionID" } } } },
+    { "if": { "properties": { "event": { "const": "chat/init" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ChatInit" } } } },
+    { "if": { "properties": { "event": { "const": "chat/message" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ChatMessage" } } } },
+    { "if": { "properties": { "event": { "const": "chat/emote" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ChatEmote" } } } },
+    { "if": { "properties": { "event": { "const": "filetransfer/update" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/FileTransferUpdate" } } } },
+    { "if": { "properties": { "event": { "const": "openinapp/init" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/OpenInAppInit" } } } },
+    { "if": { "properties": { "event": { "const": "openinapp/openlink" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/OpenInAppLink" } } } }
   ]
 }

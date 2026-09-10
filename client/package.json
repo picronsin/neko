@@ -18,6 +18,7 @@
     "build:lib": "vue-cli-service build --target lib --name neko-lib 'src/lib.ts'",
     "build:emoji": "ts-node --files --project tools/tsconfig.json tools/emoji.ts",
     "test:sdk": "ts-node --project tools/tsconfig.json tools/sdk.test.ts",
+    "generate:api": "openapi-generator-cli generate -i ../server/openapi.yaml -g typescript-axios -o src/api/generated --additional-properties=supportsES6=true,withSeparateModelsAndApi=true",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
@@ -42,6 +43,7 @@
     "vuex": "^3.5.1"
   },
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.41.0",
     "@types/animejs": "^3.1.6",
     "@types/node": "^18.11.18",
     "@types/vue": "^2.0.0",

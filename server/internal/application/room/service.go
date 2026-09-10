@@ -1,6 +1,8 @@
 package room
 
 import (
+	"context"
+
 	"github.com/m1k1o/neko/server/internal/control"
 	"github.com/m1k1o/neko/server/internal/domain"
 	"github.com/m1k1o/neko/server/pkg/types"
@@ -18,6 +20,7 @@ type Snapshot struct {
 }
 
 type Service struct {
+	rooms    domain.RoomRepository
 	sessions types.SessionManager
 	desktop  types.DesktopManager
 	capture  types.CaptureManager
@@ -30,47 +33,24 @@ func NewService(
 	capture types.CaptureManager,
 	controlService *control.Service,
 ) *Service {
-	return &Service{sessions: sessions, desktop: desktop, capture: capture, control: controlService}
+	return &Service{
+		rooms:    NewSessionRoomRepository(sessions),
+		sessions: sessions,
+		desktop:  desktop,
+		capture:  capture,
+		control:  controlService,
+	}
 }
 
 func (s *Service) Snapshot(session types.Session) Snapshot {
-	status := s.control.Status()
-
-	participants := make([]domain.Participant, 0)
-	for _, current := range s.sessions.List() {
-		profile := current.Profile()
-		state := current.State()
-		participants = append(participants, domain.Participant{
-			Member: domain.Member{
-				ID:          current.ID(),
-				DisplayName: profile.Name,
-				Avatar:      profile.Avatar,
-				Permission: domain.Permission{
-					Admin:              profile.IsAdmin,
-					Login:              profile.CanLogin,
-					Connect:            profile.CanConnect,
-					Watch:              profile.CanWatch,
-					Host:               profile.CanHost,
-					ShareMedia:         profile.CanShareMedia,
-					AccessClipboard:    profile.CanAccessClipboard,
-					SendInactiveCursor: profile.SendsInactiveCursor,
-					SeeInactiveCursors: profile.CanSeeInactiveCursors,
-				},
-			},
-			Session: domain.Session{
-				ID:        current.ID(),
-				Connected: state.IsConnected,
-				Watching:  state.IsWatching,
-			},
-		})
+	room, err := s.rooms.Get(context.Background(), "default")
+	if err != nil {
+		room = domain.Room{ID: "default"}
 	}
 
 	return Snapshot{
-		SessionID: session.ID(),
-		Room: domain.Room{
-			Participants: participants,
-			Control:      domain.ControlLease{HolderID: status.HostID, Epoch: status.Epoch},
-		},
+		SessionID:         session.ID(),
+		Room:              room,
 		ScreenSize:        s.desktop.GetScreenSize(),
 		Settings:          s.sessions.Settings(),
 		TouchEvents:       s.desktop.HasTouchSupport(),

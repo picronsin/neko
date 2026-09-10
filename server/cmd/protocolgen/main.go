@@ -254,6 +254,20 @@ func primitiveSchemaType(typeName string, property schemaProperty) string {
 		}
 		return "Array<" + schemaType(*property.Items) + ">"
 	case "object":
+		if len(property.AdditionalProperties) == 0 {
+			return "Record<string, unknown>"
+		}
+		var additional bool
+		if json.Unmarshal(property.AdditionalProperties, &additional) == nil {
+			if additional {
+				return "Record<string, unknown>"
+			}
+			return "Record<string, never>"
+		}
+		var additionalSchema schemaProperty
+		if json.Unmarshal(property.AdditionalProperties, &additionalSchema) == nil {
+			return "Record<string, " + schemaType(additionalSchema) + ">"
+		}
 		return "Record<string, unknown>"
 	default:
 		return "unknown"

@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/rs/zerolog/log"
+
+	"github.com/m1k1o/neko/server/pkg/protocol"
 )
 
 func HttpJsonRequest(w http.ResponseWriter, r *http.Request, res any) error {
@@ -105,8 +107,9 @@ func (e *HTTPError) Msg(str string) *HTTPError {
 
 func HttpError(code int, res ...string) *HTTPError {
 	err := &HTTPError{
-		Code:    code,
-		Message: http.StatusText(code),
+		Code:      code,
+		Message:   http.StatusText(code),
+		ErrorCode: defaultHTTPErrorCode(code),
 	}
 
 	if len(res) == 1 {
@@ -114,6 +117,21 @@ func HttpError(code int, res ...string) *HTTPError {
 	}
 
 	return err
+}
+
+func defaultHTTPErrorCode(status int) string {
+	switch status {
+	case http.StatusBadRequest, http.StatusUnprocessableEntity:
+		return string(protocol.InvalidPayload)
+	case http.StatusUnauthorized, http.StatusForbidden:
+		return string(protocol.PermissionDenied)
+	case http.StatusNotFound:
+		return string(protocol.NotFound)
+	case http.StatusConflict:
+		return string(protocol.ControlConflict)
+	default:
+		return string(protocol.InternalError)
+	}
 }
 
 func HttpBadRequest(res ...string) *HTTPError {

@@ -6,6 +6,7 @@ import { RoomClient } from '../src/sdk/room'
 import { encodeMediaInput, MEDIA_OPCODE } from '../src/sdk/media-protocol'
 import { classifyNetworkQuality } from '../src/sdk/network-monitor'
 import { validateSignalingMessage } from '../src/sdk/signaling'
+import { validateProtocolPayload } from '../src/protocol/validate'
 import { mapPointerToScreen, normalizeScreenConfigurations } from '../src/neko/screen'
 
 async function testAuthClient() {
@@ -55,7 +56,10 @@ assert.equal(classifyNetworkQuality(200, 0.01, true), 'fair')
 assert.equal(classifyNetworkQuality(400, 0, true), 'poor')
 assert.equal(classifyNetworkQuality(80, 0.1, true), 'poor')
 
-assert.deepEqual(validateSignalingMessage({ event: 'system/init' }), { event: 'system/init' })
+assert.deepEqual(validateSignalingMessage({ event: 'system/init', payload: {} }), {
+  event: 'system/init',
+  payload: {},
+})
 assert.deepEqual(validateSignalingMessage({ event: 'session/cursors', payload: [] }), {
   event: 'session/cursors',
   payload: [],
@@ -66,6 +70,12 @@ assert.throws(
 )
 assert.throws(() => validateSignalingMessage({ event: '   ' }), /event is required/)
 assert.throws(() => validateSignalingMessage({ event: 'system/init', payload: null }), /payload must be an object/)
+assert.throws(() => validateSignalingMessage({ event: 'signal/offer', payload: {} }), /sdp/)
+assert.throws(() => validateSignalingMessage({ event: 'control/renew', payload: { epoch: -1 } }), /epoch/)
+assert.doesNotThrow(() => validateProtocolPayload('keyboard/modifiers', {}))
+assert.doesNotThrow(() => validateSignalingMessage({ event: 'control/request' }))
+assert.doesNotThrow(() => validateSignalingMessage({ event: 'chat/message', payload: { id: 'u1', created: 'now', content: { text: 'hello' } } }))
+assert.throws(() => validateSignalingMessage({ event: 'client/heartbeat', payload: {} }), /must be omitted/)
 
 assert.deepEqual(
   normalizeScreenConfigurations([
