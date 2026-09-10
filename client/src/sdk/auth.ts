@@ -1,3 +1,5 @@
+import { normalizeApiError } from './api-error'
+
 export interface AuthHttpClient {
   defaults: {
     headers: {
@@ -22,18 +24,24 @@ export class AuthClient {
   }
 
   async login(username: string, password: string) {
-    const response = await this.http.post<LoginResponse>(`${this.apiURL}/login`, {
-      username,
-      password,
-    })
-    this._token = response.data.token || ''
-    this.applyToken()
-    return this._token
+    try {
+      const response = await this.http.post<LoginResponse>(`${this.apiURL}/login`, {
+        username,
+        password,
+      })
+      this._token = response.data.token || ''
+      this.applyToken()
+      return this._token
+    } catch (error) {
+      throw normalizeApiError(error, 'login failed')
+    }
   }
 
   async logout() {
     try {
       await this.http.post(`${this.apiURL}/logout`)
+    } catch (error) {
+      throw normalizeApiError(error, 'logout failed')
     } finally {
       this.clear()
     }

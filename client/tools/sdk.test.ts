@@ -1,5 +1,6 @@
 import * as assert from 'node:assert/strict'
 import { AuthClient } from '../src/sdk/auth'
+import { ApiError, normalizeApiError } from '../src/sdk/api-error'
 import { ControlInputController } from '../src/sdk/control-input'
 import { MediaSession } from '../src/sdk/media-session'
 import { RoomClient } from '../src/sdk/room'
@@ -49,6 +50,12 @@ async function testRoomClient() {
     { method: 'POST', url: '/api/room/control/reset' },
   ])
 }
+
+const normalized = normalizeApiError({ response: { status: 409, data: { message: 'control busy', error_code: 'CONTROL_CONFLICT' } } })
+assert.equal(normalized instanceof ApiError, true)
+assert.equal(normalized.status, 409)
+assert.equal(normalized.errorCode, 'CONTROL_CONFLICT')
+assert.equal(normalized.message, 'control busy')
 
 assert.equal(classifyNetworkQuality(null, 0, false), 'unknown')
 assert.equal(classifyNetworkQuality(80, 0.01, true), 'good')
