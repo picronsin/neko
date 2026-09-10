@@ -12,8 +12,9 @@ The files in this directory are the protocol source of truth:
 - `media-input.schema.json` defines the binary WebRTC DataChannel input.
 
 Run `go generate ./pkg/protocol` from `server/` after changing the JSON
-contracts. The generator updates the Go and TypeScript protocol surfaces; do
-not edit generated files manually.
+contracts. The generator updates the Go and TypeScript protocol surfaces and
+fails when an event is missing a payload contract or an explicit no-payload
+declaration; do not edit generated files manually.
 
 `media-input.schema.json` is the logical contract for control input shared by
 the browser and server. The WebRTC DataChannel representation is a network

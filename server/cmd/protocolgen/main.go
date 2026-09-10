@@ -25,7 +25,20 @@ type errorSpec struct {
 }
 
 type payloadSchema struct {
-	Defs map[string]schemaDefinition `json:"$defs"`
+	Defs            map[string]schemaDefinition `json:"$defs"`
+	AllOf           []payloadRule               `json:"allOf"`
+	NoPayloadEvents []string                    `json:"x-no-payload-events"`
+}
+
+type payloadRule struct {
+	If struct {
+		Properties struct {
+			Event struct {
+				Const string   `json:"const"`
+				Enum  []string `json:"enum"`
+			} `json:"event"`
+		} `json:"properties"`
+	} `json:"if"`
 }
 
 type schemaDefinition struct {
@@ -54,7 +67,7 @@ func main() {
 	events := readJSON[[]eventSpec](filepath.Join(root, "protocol", "events.json"))
 	errors := readJSON[[]errorSpec](filepath.Join(root, "protocol", "errors.json"))
 	payloads := readJSON[payloadSchema](filepath.Join(root, "protocol", "payloads.schema.json"))
-	validate(events, errors)
+	validate(events, errors, payloads)
 
 	goOutput, err := format.Source([]byte(generateGo(events, errors)))
 	if err != nil {
@@ -110,7 +123,7 @@ func readJSON[T any](path string) T {
 	return result
 }
 
-func validate(events []eventSpec, errors []errorSpec) {
+func validate(events []eventSpec, errors []errorSpec, payloads payloadSchema) {
 	seen := make(map[string]struct{}, len(events))
 	for _, event := range events {
 		if event.Name == "" || event.Value == "" {
@@ -130,6 +143,45 @@ func validate(events []eventSpec, errors []errorSpec) {
 			fatal(fmt.Errorf("duplicate error value %q", protocolError.Value))
 		}
 		seen[protocolError.Value] = struct{}{}
+	}
+
+	knownEvents := make(map[string]struct{}, len(events))
+	for _, event := range events {
+		knownEvents[event.Value] = struct{}{}
+	}
+	coveredPayloads := make(map[string]struct{})
+	for _, event := range payloads.NoPayloadEvents {
+		if _, ok := knownEvents[event]; !ok {
+			fatal(fmt.Errorf("payload schema marks unknown no-payload event %q", event))
+		}
+		if _, duplicate := coveredPayloads[event]; duplicate {
+			fatal(fmt.Errorf("payload schema maps event %q more than once", event))
+		}
+		coveredPayloads[event] = struct{}{}
+	}
+	for _, rule := range payloads.AllOf {
+		event := rule.If.Properties.Event
+		values := append([]string{}, event.Enum...)
+		if event.Const != "" {
+			values = append(values, event.Const)
+		}
+		if len(values) == 0 {
+			fatal(fmt.Errorf("payload schema contains a rule without an event"))
+		}
+		for _, value := range values {
+			if _, ok := knownEvents[value]; !ok {
+				fatal(fmt.Errorf("payload schema maps unknown event %q", value))
+			}
+			if _, duplicate := coveredPayloads[value]; duplicate {
+				fatal(fmt.Errorf("payload schema maps event %q more than once", value))
+			}
+			coveredPayloads[value] = struct{}{}
+		}
+	}
+	for event := range knownEvents {
+		if _, ok := coveredPayloads[event]; !ok {
+			fatal(fmt.Errorf("payload schema has no contract for event %q", event))
+		}
 	}
 }
 
