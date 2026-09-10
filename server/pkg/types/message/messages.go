@@ -1,10 +1,6 @@
 package message
 
-import (
-	"github.com/pion/webrtc/v4"
-
-	"github.com/m1k1o/neko/server/pkg/types"
-)
+import "github.com/m1k1o/neko/server/pkg/types"
 
 /////////////////////////////
 // System
@@ -65,7 +61,7 @@ type SignalProvide struct {
 }
 
 type SignalCandidate struct {
-	webrtc.ICECandidateInit
+	types.ICECandidate
 }
 
 type SignalDescription struct {

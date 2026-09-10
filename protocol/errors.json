@@ -1,0 +1,12 @@
+[
+  {"name":"INVALID_MESSAGE","value":"INVALID_MESSAGE","retryable":false},
+  {"name":"UNKNOWN_EVENT","value":"UNKNOWN_EVENT","retryable":false},
+  {"name":"INVALID_PAYLOAD","value":"INVALID_PAYLOAD","retryable":false},
+  {"name":"PERMISSION_DENIED","value":"PERMISSION_DENIED","retryable":false},
+  {"name":"ROOM_NOT_READY","value":"ROOM_NOT_READY","retryable":true},
+  {"name":"CONTROL_CONFLICT","value":"CONTROL_CONFLICT","retryable":true},
+  {"name":"STALE_EPOCH","value":"STALE_EPOCH","retryable":false},
+  {"name":"ICE_FAILED","value":"ICE_FAILED","retryable":true},
+  {"name":"NOT_FOUND","value":"NOT_FOUND","retryable":false},
+  {"name":"INTERNAL_ERROR","value":"INTERNAL_ERROR","retryable":true}
+]

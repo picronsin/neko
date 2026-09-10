@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/m1k1o/neko/server/internal/websocket/handler"
+	"github.com/m1k1o/neko/server/pkg/protocol"
 	"github.com/m1k1o/neko/server/pkg/types"
 	"github.com/m1k1o/neko/server/pkg/types/event"
 	"github.com/m1k1o/neko/server/pkg/types/message"
@@ -330,8 +331,9 @@ func (manager *WebSocketManagerCtx) handle(connection *websocket.Conn, peer type
 		case raw := <-bytes:
 			data := types.WebSocketMessage{}
 			if err := json.Unmarshal(raw, &data); err != nil {
+				peer.Send(event.SYSTEM_ERROR, protocol.NewError(protocol.InvalidMessage, err.Error()))
 				logger.Err(err).Msg("message unmarshalling has failed")
-				break
+				continue
 			}
 
 			// log events if not ignored
@@ -358,6 +360,7 @@ func (manager *WebSocketManagerCtx) handle(connection *websocket.Conn, peer type
 			}
 
 			if !handled {
+				peer.Send(event.SYSTEM_ERROR, protocol.NewError(protocol.UnknownEvent, "unhandled websocket event: "+data.Event))
 				logger.Warn().Str("event", data.Event).Msg("unhandled message")
 			}
 		case err := <-cancel:

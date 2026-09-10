@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/pion/webrtc/v4"
-
 	"github.com/m1k1o/neko/server/pkg/types"
 )
 
@@ -102,7 +100,7 @@ func (s *Service) Offer(session types.Session, sdp string) (string, error) {
 	if peer == nil {
 		return "", errors.New("webRTC peer does not exist")
 	}
-	if err := peer.SetRemoteDescription(webrtc.SessionDescription{SDP: sdp, Type: webrtc.SDPTypeOffer}); err != nil {
+	if err := peer.SetRemoteDescription(types.SessionDescription{SDP: sdp, Type: "offer"}); err != nil {
 		return "", err
 	}
 	answer, err := peer.CreateAnswer()
@@ -117,10 +115,10 @@ func (s *Service) Answer(session types.Session, sdp string) error {
 	if peer == nil {
 		return errors.New("webRTC peer does not exist")
 	}
-	return peer.SetRemoteDescription(webrtc.SessionDescription{SDP: sdp, Type: webrtc.SDPTypeAnswer})
+	return peer.SetRemoteDescription(types.SessionDescription{SDP: sdp, Type: "answer"})
 }
 
-func (s *Service) Candidate(session types.Session, candidate webrtc.ICECandidateInit) error {
+func (s *Service) Candidate(session types.Session, candidate types.ICECandidate) error {
 	peer := session.GetWebRTCPeer()
 	if peer == nil {
 		return errors.New("webRTC peer does not exist")

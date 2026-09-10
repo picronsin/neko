@@ -3,6 +3,7 @@ package webrtc
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"sync"
 	"time"
 
@@ -54,7 +55,7 @@ type WebRTCPeerCtx struct {
 // connection
 //
 
-func (peer *WebRTCPeerCtx) CreateOffer(ICERestart bool) (*webrtc.SessionDescription, error) {
+func (peer *WebRTCPeerCtx) CreateOffer(ICERestart bool) (*types.SessionDescription, error) {
 	peer.mu.Lock()
 	defer peer.mu.Unlock()
 
@@ -65,10 +66,14 @@ func (peer *WebRTCPeerCtx) CreateOffer(ICERestart bool) (*webrtc.SessionDescript
 		return nil, err
 	}
 
-	return peer.setLocalDescription(offer)
+	local, err := peer.setLocalDescription(offer)
+	if err != nil {
+		return nil, err
+	}
+	return sessionDescriptionFromPion(local), nil
 }
 
-func (peer *WebRTCPeerCtx) CreateAnswer() (*webrtc.SessionDescription, error) {
+func (peer *WebRTCPeerCtx) CreateAnswer() (*types.SessionDescription, error) {
 	peer.mu.Lock()
 	defer peer.mu.Unlock()
 
@@ -77,7 +82,11 @@ func (peer *WebRTCPeerCtx) CreateAnswer() (*webrtc.SessionDescription, error) {
 		return nil, err
 	}
 
-	return peer.setLocalDescription(answer)
+	local, err := peer.setLocalDescription(answer)
+	if err != nil {
+		return nil, err
+	}
+	return sessionDescriptionFromPion(local), nil
 }
 
 func (peer *WebRTCPeerCtx) setLocalDescription(description webrtc.SessionDescription) (*webrtc.SessionDescription, error) {
@@ -99,18 +108,51 @@ func (peer *WebRTCPeerCtx) setLocalDescription(description webrtc.SessionDescrip
 	return peer.connection.LocalDescription(), nil
 }
 
-func (peer *WebRTCPeerCtx) SetRemoteDescription(desc webrtc.SessionDescription) error {
+func (peer *WebRTCPeerCtx) SetRemoteDescription(desc types.SessionDescription) error {
 	peer.mu.Lock()
 	defer peer.mu.Unlock()
 
-	return peer.connection.SetRemoteDescription(desc)
+	pionDescription, err := sessionDescriptionToPion(desc)
+	if err != nil {
+		return err
+	}
+	return peer.connection.SetRemoteDescription(pionDescription)
 }
 
-func (peer *WebRTCPeerCtx) SetCandidate(candidate webrtc.ICECandidateInit) error {
+func (peer *WebRTCPeerCtx) SetCandidate(candidate types.ICECandidate) error {
 	peer.mu.Lock()
 	defer peer.mu.Unlock()
 
-	return peer.connection.AddICECandidate(candidate)
+	return peer.connection.AddICECandidate(webrtc.ICECandidateInit{
+		Candidate:        candidate.Candidate,
+		SDPMid:           candidate.SDPMid,
+		SDPMLineIndex:    candidate.SDPMLineIndex,
+		UsernameFragment: candidate.UsernameFragment,
+	})
+}
+
+func sessionDescriptionFromPion(description *webrtc.SessionDescription) *types.SessionDescription {
+	if description == nil {
+		return nil
+	}
+	return &types.SessionDescription{SDP: description.SDP, Type: description.Type.String()}
+}
+
+func sessionDescriptionToPion(description types.SessionDescription) (webrtc.SessionDescription, error) {
+	var descriptionType webrtc.SDPType
+	switch description.Type {
+	case "offer":
+		descriptionType = webrtc.SDPTypeOffer
+	case "answer":
+		descriptionType = webrtc.SDPTypeAnswer
+	case "pranswer":
+		descriptionType = webrtc.SDPTypePranswer
+	case "rollback":
+		descriptionType = webrtc.SDPTypeRollback
+	default:
+		return webrtc.SessionDescription{}, fmt.Errorf("unsupported session description type %q", description.Type)
+	}
+	return webrtc.SessionDescription{SDP: description.SDP, Type: descriptionType}, nil
 }
 
 // TODO: Add shutdown function?

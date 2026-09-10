@@ -313,14 +313,15 @@ export class NekoClient extends BaseClient implements EventEmitter<NekoEvents> {
     })
   }
 
-  protected [EVENT.SYSTEM.ERROR]({ title, message }: SystemMessagePayload) {
+  protected [EVENT.SYSTEM.ERROR]({ title, message, code, retryable }: SystemMessagePayload) {
+    const detail = code ? `[${code}] ${message}` : message
     if (!this.state.connection.connected && message) {
-      this.state.connection.setError(message)
+      this.state.connection.setError(detail)
     }
 
     this.ui.alert({
       title,
-      text: message,
+      text: retryable ? `${detail} (please retry)` : detail,
       icon: 'error',
       confirmButtonText: this.ui.translate('connection.button_confirm'),
     })

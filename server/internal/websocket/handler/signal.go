@@ -55,7 +55,7 @@ func (h *MessageHandlerCtx) signalAnswer(session types.Session, payload *message
 }
 
 func (h *MessageHandlerCtx) signalCandidate(session types.Session, payload *message.SignalCandidate) error {
-	return h.signaling.Candidate(session, payload.ICECandidateInit)
+	return h.signaling.Candidate(session, payload.ICECandidate)
 }
 
 func (h *MessageHandlerCtx) signalVideo(session types.Session, payload *message.SignalVideo) error {

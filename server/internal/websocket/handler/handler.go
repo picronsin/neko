@@ -141,6 +141,7 @@ func (h *MessageHandlerCtx) Message(session types.Session, data types.WebSocketM
 	}
 
 	if err != nil {
+		session.Send(event.SYSTEM_ERROR, protocolError(err))
 		h.logger.Warn().Err(err).
 			Str("event", data.Event).
 			Str("session_id", session.ID()).

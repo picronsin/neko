@@ -1239,9 +1239,15 @@ components:
     ErrorMessage:
       type: object
       properties:
+        code:
+          type: integer
+          description: HTTP status code.
         message:
           type: string
           description: Detailed error message.
+        error_code:
+          type: string
+          description: Stable application or protocol error code.
 
     BatchRequest:
       type: object

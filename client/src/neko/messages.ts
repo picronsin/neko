@@ -1,4 +1,5 @@
 import { FileListItem, ScreenResolution } from './types'
+import { ProtocolErrorCode } from '../protocol/events.generated'
 
 export type WebSocketPayloads =
   | SignalProvidePayload
@@ -79,6 +80,8 @@ export interface SystemSettingsPayload extends SettingsPayload {
 export interface SystemMessagePayload {
   title: string
   message: string
+  code?: ProtocolErrorCode
+  retryable?: boolean
 }
 
 /*

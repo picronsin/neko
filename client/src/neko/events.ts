@@ -1,3 +1,5 @@
+import { PROTOCOL_EVENT } from '../protocol/events.generated'
+
 export const EVENT = {
   // Internal Events
   RECONNECTING: 'RECONNECTING',
@@ -10,64 +12,64 @@ export const EVENT = {
 
   // Websocket Events
   SYSTEM: {
-    INIT: 'system/init',
-    ADMIN: 'system/admin',
-    SETTINGS: 'system/settings',
-    HEARTBEAT: 'system/heartbeat',
-    DISCONNECT: 'system/disconnect',
-    ERROR: 'system/error',
+    INIT: PROTOCOL_EVENT.SYSTEM_INIT,
+    ADMIN: PROTOCOL_EVENT.SYSTEM_ADMIN,
+    SETTINGS: PROTOCOL_EVENT.SYSTEM_SETTINGS,
+    HEARTBEAT: PROTOCOL_EVENT.SYSTEM_HEARTBEAT,
+    DISCONNECT: PROTOCOL_EVENT.SYSTEM_DISCONNECT,
+    ERROR: PROTOCOL_EVENT.SYSTEM_ERROR,
   },
   CLIENT: {
-    HEARTBEAT: 'client/heartbeat',
+    HEARTBEAT: PROTOCOL_EVENT.CLIENT_HEARTBEAT,
   },
   SIGNAL: {
-    REQUEST: 'signal/request',
-    RESTART: 'signal/restart',
-    OFFER: 'signal/offer',
-    ANSWER: 'signal/answer',
-    PROVIDE: 'signal/provide',
-    CANDIDATE: 'signal/candidate',
-    CLOSE: 'signal/close',
+    REQUEST: PROTOCOL_EVENT.SIGNAL_REQUEST,
+    RESTART: PROTOCOL_EVENT.SIGNAL_RESTART,
+    OFFER: PROTOCOL_EVENT.SIGNAL_OFFER,
+    ANSWER: PROTOCOL_EVENT.SIGNAL_ANSWER,
+    PROVIDE: PROTOCOL_EVENT.SIGNAL_PROVIDE,
+    CANDIDATE: PROTOCOL_EVENT.SIGNAL_CANDIDATE,
+    CLOSE: PROTOCOL_EVENT.SIGNAL_CLOSE,
   },
   SESSION: {
-    CREATED: 'session/created',
-    DELETED: 'session/deleted',
-    PROFILE: 'session/profile',
-    STATE: 'session/state',
-    CURSORS: 'session/cursors',
+    CREATED: PROTOCOL_EVENT.SESSION_CREATED,
+    DELETED: PROTOCOL_EVENT.SESSION_DELETED,
+    PROFILE: PROTOCOL_EVENT.SESSION_PROFILE,
+    STATE: PROTOCOL_EVENT.SESSION_STATE,
+    CURSORS: PROTOCOL_EVENT.SESSION_CURSORS,
   },
   CONTROL: {
-    HOST: 'control/host',
-    RELEASE: 'control/release',
-    REQUEST: 'control/request',
-    RENEW: 'control/renew',
+    HOST: PROTOCOL_EVENT.CONTROL_HOST,
+    RELEASE: PROTOCOL_EVENT.CONTROL_RELEASE,
+    REQUEST: PROTOCOL_EVENT.CONTROL_REQUEST,
+    RENEW: PROTOCOL_EVENT.CONTROL_RENEW,
   },
   CHAT: {
-    INIT: 'chat/init',
-    MESSAGE: 'chat/message',
-    EMOTE: 'chat/emote',
+    INIT: PROTOCOL_EVENT.CHAT_INIT,
+    MESSAGE: PROTOCOL_EVENT.CHAT_MESSAGE,
+    EMOTE: PROTOCOL_EVENT.CHAT_EMOTE,
   },
   FILETRANSFER: {
-    UPDATE: 'filetransfer/update',
+    UPDATE: PROTOCOL_EVENT.FILETRANSFER_UPDATE,
   },
   OPENINAPP: {
-    INIT: 'openinapp/init',
-    OPENLINK: 'openinapp/openlink',
+    INIT: PROTOCOL_EVENT.OPENINAPP_INIT,
+    OPENLINK: PROTOCOL_EVENT.OPENINAPP_OPENLINK,
   },
   SCREEN: {
-    UPDATED: 'screen/updated',
-    SET: 'screen/set',
+    UPDATED: PROTOCOL_EVENT.SCREEN_UPDATED,
+    SET: PROTOCOL_EVENT.SCREEN_SET,
   },
   CLIPBOARD: {
-    UPDATED: 'clipboard/updated',
-    SET: 'clipboard/set',
+    UPDATED: PROTOCOL_EVENT.CLIPBOARD_UPDATED,
+    SET: PROTOCOL_EVENT.CLIPBOARD_SET,
   },
   BROADCAST: {
-    STATUS: 'broadcast/status',
+    STATUS: PROTOCOL_EVENT.BROADCAST_STATUS,
   },
   KEYBOARD: {
-    MAP: 'keyboard/map',
-    MODIFIERS: 'keyboard/modifiers',
+    MAP: PROTOCOL_EVENT.KEYBOARD_MAP,
+    MODIFIERS: PROTOCOL_EVENT.KEYBOARD_MODIFIERS,
   },
 } as const
 

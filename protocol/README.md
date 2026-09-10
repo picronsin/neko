@@ -1,5 +1,16 @@
 # Neko protocol contracts
 
+The files in this directory are the protocol source of truth:
+
+- `events.json` defines the WebSocket event names.
+- `errors.json` defines stable error codes returned through `system/error`.
+- `websocket.schema.json` defines the canonical `{event,payload}` envelope.
+- `media-input.schema.json` defines the binary WebRTC DataChannel input.
+
+Run `go generate ./pkg/protocol` from `server/` after changing the JSON
+contracts. The generator updates the Go and TypeScript protocol surfaces; do
+not edit generated files manually.
+
 `media-input.schema.json` is the logical contract for control input shared by
 the browser and server. The WebRTC DataChannel representation is a network
 byte-order packet:

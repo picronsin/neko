@@ -3,8 +3,6 @@ package types
 import (
 	"errors"
 
-	"github.com/pion/webrtc/v4"
-
 	"github.com/m1k1o/neko/server/pkg/types/codec"
 )
 
@@ -18,6 +16,20 @@ type ICEServer struct {
 	URLs       []string `mapstructure:"urls"       json:"urls"`
 	Username   string   `mapstructure:"username"   json:"username,omitempty"`
 	Credential string   `mapstructure:"credential" json:"credential,omitempty"`
+}
+
+// SessionDescription and ICECandidate are transport-neutral WebRTC values.
+// Pion conversion belongs to the WebRTC adapter, not application services.
+type SessionDescription struct {
+	SDP  string `json:"sdp"`
+	Type string `json:"type"`
+}
+
+type ICECandidate struct {
+	Candidate        string  `json:"candidate"`
+	SDPMid           *string `json:"sdpMid,omitempty"`
+	SDPMLineIndex    *uint16 `json:"sdpMLineIndex,omitempty"`
+	UsernameFragment *string `json:"usernameFragment,omitempty"`
 }
 
 type PeerVideo struct {
@@ -41,10 +53,10 @@ type PeerAudioRequest struct {
 }
 
 type WebRTCPeer interface {
-	CreateOffer(ICERestart bool) (*webrtc.SessionDescription, error)
-	CreateAnswer() (*webrtc.SessionDescription, error)
-	SetRemoteDescription(webrtc.SessionDescription) error
-	SetCandidate(webrtc.ICECandidateInit) error
+	CreateOffer(ICERestart bool) (*SessionDescription, error)
+	CreateAnswer() (*SessionDescription, error)
+	SetRemoteDescription(SessionDescription) error
+	SetCandidate(ICECandidate) error
 
 	SetPaused(isPaused bool) error
 	Paused() bool
@@ -66,6 +78,6 @@ type WebRTCManager interface {
 
 	ICEServers() []ICEServer
 
-	CreatePeer(session Session, videoCodec codec.RTPCodec) (*webrtc.SessionDescription, WebRTCPeer, error)
+	CreatePeer(session Session, videoCodec codec.RTPCodec) (*SessionDescription, WebRTCPeer, error)
 	SetCursorPosition(x, y int)
 }

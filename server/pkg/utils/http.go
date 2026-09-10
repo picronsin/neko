@@ -44,11 +44,19 @@ func HttpSuccess(w http.ResponseWriter, res ...any) error {
 
 // HTTPError is an error with a message and an HTTP status code.
 type HTTPError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Code      int    `json:"code"`
+	Message   string `json:"message"`
+	ErrorCode string `json:"error_code,omitempty"`
 
 	InternalErr error  `json:"-"`
 	InternalMsg string `json:"-"`
+}
+
+// WithErrorCode attaches the stable protocol/application code used by typed
+// clients. HTTP status remains available for generic HTTP tooling.
+func (e *HTTPError) WithErrorCode(code string) *HTTPError {
+	e.ErrorCode = code
+	return e
 }
 
 func (e *HTTPError) Error() string {

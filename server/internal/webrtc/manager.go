@@ -271,7 +271,7 @@ func (manager *WebRTCManagerCtx) newPeerConnection(logger zerolog.Logger, codecs
 	return connection, <-estimatorChan, err
 }
 
-func (manager *WebRTCManagerCtx) CreatePeer(session types.Session, requestedVideoCodec codec.RTPCodec) (*webrtc.SessionDescription, types.WebRTCPeer, error) {
+func (manager *WebRTCManagerCtx) CreatePeer(session types.Session, requestedVideoCodec codec.RTPCodec) (*types.SessionDescription, types.WebRTCPeer, error) {
 	id := atomic.AddInt32(&manager.peerId, 1)
 
 	// get metrics for session
@@ -311,7 +311,12 @@ func (manager *WebRTCManagerCtx) CreatePeer(session types.Session, requestedVide
 			session.Send(
 				event.SIGNAL_CANDIDATE,
 				message.SignalCandidate{
-					ICECandidateInit: candidate.ToJSON(),
+					ICECandidate: types.ICECandidate{
+						Candidate:        candidate.ToJSON().Candidate,
+						SDPMid:           candidate.ToJSON().SDPMid,
+						SDPMLineIndex:    candidate.ToJSON().SDPMLineIndex,
+						UsernameFragment: candidate.ToJSON().UsernameFragment,
+					},
 				})
 		})
 	}

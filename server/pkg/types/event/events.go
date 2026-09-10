@@ -1,70 +1,70 @@
+// Package event keeps the historical event names used by the server while
+// sourcing their values from the generated protocol catalog.
 package event
 
+import "github.com/m1k1o/neko/server/pkg/protocol"
+
 const (
-	SYSTEM_INIT       = "system/init"
-	SYSTEM_ADMIN      = "system/admin"
-	SYSTEM_SETTINGS   = "system/settings"
-	SYSTEM_LOGS       = "system/logs"
-	SYSTEM_DISCONNECT = "system/disconnect"
-	SYSTEM_HEARTBEAT  = "system/heartbeat"
+	SYSTEM_INIT       = protocol.SystemInit
+	SYSTEM_ADMIN      = protocol.SystemAdmin
+	SYSTEM_SETTINGS   = protocol.SystemSettings
+	SYSTEM_LOGS       = protocol.SystemLogs
+	SYSTEM_DISCONNECT = protocol.SystemDisconnect
+	SYSTEM_HEARTBEAT  = protocol.SystemHeartbeat
+	SYSTEM_ERROR      = protocol.SystemError
+)
+
+const CLIENT_HEARTBEAT = protocol.ClientHeartbeat
+
+const (
+	SIGNAL_REQUEST   = protocol.SignalRequest
+	SIGNAL_RESTART   = protocol.SignalRestart
+	SIGNAL_OFFER     = protocol.SignalOffer
+	SIGNAL_ANSWER    = protocol.SignalAnswer
+	SIGNAL_PROVIDE   = protocol.SignalProvide
+	SIGNAL_CANDIDATE = protocol.SignalCandidate
+	SIGNAL_CLOSE     = protocol.SignalClose
+	SIGNAL_VIDEO     = protocol.SignalVideo
+	SIGNAL_AUDIO     = protocol.SignalAudio
 )
 
 const (
-	CLIENT_HEARTBEAT = "client/heartbeat"
+	SESSION_CREATED = protocol.SessionCreated
+	SESSION_DELETED = protocol.SessionDeleted
+	SESSION_PROFILE = protocol.SessionProfile
+	SESSION_STATE   = protocol.SessionState
+	SESSION_CURSORS = protocol.SessionCursors
 )
 
 const (
-	SIGNAL_REQUEST   = "signal/request"
-	SIGNAL_RESTART   = "signal/restart"
-	SIGNAL_OFFER     = "signal/offer"
-	SIGNAL_ANSWER    = "signal/answer"
-	SIGNAL_PROVIDE   = "signal/provide"
-	SIGNAL_CANDIDATE = "signal/candidate"
-	SIGNAL_CLOSE     = "signal/close"
-	SIGNAL_VIDEO     = "signal/video"
-	SIGNAL_AUDIO     = "signal/audio"
+	CONTROL_HOST    = protocol.ControlHost
+	CONTROL_RELEASE = protocol.ControlRelease
+	CONTROL_REQUEST = protocol.ControlRequest
+	CONTROL_RENEW   = protocol.ControlRenew
 )
 
 const (
-	SESSION_CREATED = "session/created"
-	SESSION_DELETED = "session/deleted"
-	SESSION_PROFILE = "session/profile"
-	SESSION_STATE   = "session/state"
-	SESSION_CURSORS = "session/cursors"
+	SCREEN_UPDATED = protocol.ScreenUpdated
+	SCREEN_SET     = protocol.ScreenSet
 )
 
 const (
-	CONTROL_HOST    = "control/host"
-	CONTROL_RELEASE = "control/release"
-	CONTROL_REQUEST = "control/request"
-	CONTROL_RENEW   = "control/renew"
+	CLIPBOARD_UPDATED = protocol.ClipboardUpdated
+	CLIPBOARD_SET     = protocol.ClipboardSet
 )
 
 const (
-	SCREEN_UPDATED = "screen/updated"
-	SCREEN_SET     = "screen/set"
+	KEYBOARD_MODIFIERS = protocol.KeyboardModifiers
+	KEYBOARD_MAP       = protocol.KeyboardMap
 )
 
 const (
-	CLIPBOARD_UPDATED = "clipboard/updated"
-	CLIPBOARD_SET     = "clipboard/set"
+	BROADCAST_STATUS = protocol.BroadcastStatus
+	SEND_UNICAST     = protocol.SendUnicast
+	SEND_BROADCAST   = protocol.SendBroadcast
 )
 
 const (
-	KEYBOARD_MODIFIERS = "keyboard/modifiers"
-	KEYBOARD_MAP       = "keyboard/map"
-)
-
-const (
-	BROADCAST_STATUS = "broadcast/status"
-)
-
-const (
-	SEND_UNICAST   = "send/unicast"
-	SEND_BROADCAST = "send/broadcast"
-)
-
-const (
-	FILE_CHOOSER_DIALOG_OPENED = "file_chooser_dialog/opened"
-	FILE_CHOOSER_DIALOG_CLOSED = "file_chooser_dialog/closed"
+	FILE_CHOOSER_DIALOG_OPENED = protocol.FileChooserDialogOpened
+	FILE_CHOOSER_DIALOG_CLOSED = protocol.FileChooserDialogClosed
 )
