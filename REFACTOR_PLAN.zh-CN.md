@@ -260,8 +260,9 @@ server/internal/
 
 - 已实现：为 H.264 VAAPI/NVENC 增加 GPU 设备及驱动初始化探测，并在实际管线无法进入可用状态时回退；仍需在真实 VAAPI/NVENC GPU 主机上完成硬件能力矩阵验证。
 - 已实现：为 FRP/TURN 模板增加本地可重复的无公网 IP、relay 端口和故障诊断自动化测试；仍需在真实公网 FRP 节点、UDP 受阻网络和实际 Neko 媒体端点上补充跨网络验证。
-- 已实现：真实浏览器 WebRTC 回归和性能基线采集入口；仍需在 Linux x86_64 与 Windows x86_64/WSL2 的运行中 demo 上执行 720p/1080p、1/2/5 观看者矩阵，并将结果与 `/metrics` 资源数据关联。
-- 下一项实现：执行并固化 720p/1080p 多观看者性能基线，随后补充公网 FRP、UDP 受阻和 TURN 媒体端到端场景。
+- 已实现：真实浏览器 WebRTC 回归和性能基线采集入口；本地 Linux Docker Demo 的结果可与 `/metrics` 资源数据关联，Windows x86_64/WSL2 仍需单独执行。
+- 已完成：修复 Playwright WebSocket 帧承载解析，支持文本、Buffer、Uint8Array 和 Playwright payload 包装；本地 Docker Demo 已完成 720p/1080p、1/2/5 观看者直连矩阵，登录、信令 envelope、首帧和视频分辨率均通过，并新增 Markdown 基线报告生成器。
+- 下一项验收：在真实 VAAPI/NVENC、Windows/WSL2、公网 FRP 和 UDP 受阻 TURN 环境中复现矩阵，并将结果汇总为跨运行对比报告。
 
 ### M1/M2/M3 实际完成状态（2026-09-10）
 
@@ -269,7 +270,7 @@ server/internal/
 
 | 里程碑 | 当前代码已具备 | 尚未完成 | 总体状态 |
 | --- | --- | --- | --- |
-| M1：Chromium 性能、认证代理与少端口连通性 | Chromium 运行范围、UDP/TCP MUX、FRP/TURN 配置模板与预检、本地 FRP/Coturn 套件、媒体队列背压、质量 Profile、编码器探测与软件回退、认证 HTTP CONNECT/SOCKS5 代理、WebRTC/浏览器 E2E 入口、指标采集、UI 基础和第一批 SDK 拆分均已有实现 | 尚未完成 Linux/WSL2 的 720p/1080p × 1/2/5 完整基线、真实 VAAPI/NVENC 硬件矩阵、公网 FRP、UDP 受阻 TURN 媒体链路和最终发布验收；指标尚未形成跨运行对比报告/仪表盘 | **核心功能大部分已完成，发布验收未完成** |
+| M1：Chromium 性能、认证代理与少端口连通性 | Chromium 运行范围、UDP/TCP MUX、FRP/TURN 配置模板与预检、本地 FRP/Coturn 套件、媒体队列背压、质量 Profile、编码器探测与软件回退、认证 HTTP CONNECT/SOCKS5 代理、WebRTC/浏览器 E2E 入口、指标采集、UI 基础和第一批 SDK 拆分均已有实现；本地 Docker Demo 的 720p/1080p × 1/2/5 直连矩阵已通过 | 尚未完成真实 VAAPI/NVENC 硬件矩阵、Windows/WSL2 跨平台基线、公网 FRP、UDP 受阻 TURN 媒体链路和跨运行指标仪表盘；报告生成依赖本机安装 `jq` | **核心功能和本地直连验收已完成，外部环境验收未完成** |
 | M2：可测试的契约与领域核心 | WebSocket 已统一 `{event,payload}` envelope；已删除主要扁平信令路径；已有 `ControlLease`、`ControlService`、房间/信令/桌面/聊天/文件传输应用服务，以及客户端连接状态机和无 Vue 运行时边界 | 目前只有 `protocol/media-input.schema.json`，没有完整实时事件 schema 及 Go/TypeScript 自动生成；没有 OpenAPI Generator client、统一错误码和完整契约测试；部分应用/类型仍直接依赖 Pion 等底层类型，领域层尚未完全隔离 | **协议收口和第一批抽取已完成，M2 整体未完成** |
 | M3：模块化服务端与持久化 | 已新增 `internal/application`、`control`、`connectivity`、`proxy` 等前置模块；现有内存/文件及 multiuser/file/object/noauth 成员实现仍可运行；旧 legacy 运行时代码已删除 | 尚无完整 `ports/adapters` 边界、PostgreSQL repository、Redis lease/事件总线、OIDC/LDAP、特性开关、完整房间生命周期状态机和审计持久化 | **仅完成前置模块化基础，M3 尚未正式实施** |
 
@@ -345,7 +346,7 @@ M1 的 UI 工作拆为两层：当前先交付不触及媒体链路的视觉与�
 
 ## 9. 里程碑与成功标准
 
-1. **M1：Chromium 性能、认证代理与单端口连通性（核心实现已完成，验收未完成）**：仅支持 Chromium；默认 UDP MUX、TCP/TURN/FRP 回退、启动预检、带认证的 HTTP CONNECT/SOCKS5 出站代理、媒体背压、质量策略和第一批 UI/SDK 拆分已落地；仍需完成真实硬件、公网网络、跨平台性能矩阵并通过发布门槛。
+1. **M1：Chromium 性能、认证代理与单端口连通性（核心实现和本地直连验收已完成，外部验收未完成）**：仅支持 Chromium；默认 UDP MUX、TCP/TURN/FRP 回退、启动预检、带认证的 HTTP CONNECT/SOCKS5 出站代理、媒体背压、质量策略、第一批 UI/SDK 拆分和本地 720p/1080p × 1/2/5 直连矩阵已落地；仍需完成真实硬件、公网网络、Windows/WSL2 跨平台性能矩阵和跨运行指标对比后，才能关闭发布门槛。
 2. **M2：可测试的契约与领域核心（部分完成）**：唯一 WebSocket envelope、ControlLease、连接状态机和第一批应用服务已落地；完整协议 schema、双端自动生成类型、统一错误码、契约测试和无底层依赖领域核心尚未完成。
 3. **M3：可持久化、可集成认证的模块化后端（尚未正式实施）**：当前保留内存/文件兼容和现有成员认证实现；PostgreSQL、Redis、OIDC/LDAP、特性开关、审计和完整模块边界尚未落地。
 4. **M4：独立客户端 SDK**：在 M1 后段 UI 提取基础上完成跨框架、可独立发布的客户端 SDK；前端框架升级不触及媒体协议，嵌入式集成可复用 SDK。
