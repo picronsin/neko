@@ -54,6 +54,7 @@ export NEKO_E2E_OUTPUT_DIR=/tmp/neko-baseline-720p
 server/integration/e2e/baseline.sh
 ```
 
-For a 1080p run, set `NEKO_DEMO_SCREEN=1920x1080@30` and restart the demo,
-then use `NEKO_E2E_VIEWPORT_WIDTH=1920` and
+For a 1080p run, set both `NEKO_DEMO_SCREEN=1920x1080@30` and
+`NEKO_DEMO_VIDEO_PROFILE=high`, then restart the demo. Use
+`NEKO_E2E_VIEWPORT_WIDTH=1920` and
 `NEKO_E2E_VIEWPORT_HEIGHT=1080`. The report generator requires `jq`.
