@@ -48,7 +48,6 @@ docs/SessionState.md
 docs/SessionsApi.md
 docs/Settings.md
 docs/Stats.md
-git_push.sh
 index.ts
 model/batch-request.ts
 model/batch-response.ts
