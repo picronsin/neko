@@ -129,6 +129,7 @@ export class SignalingTransport {
     }
 
     try {
+      validateSignalingMessage(message)
       this.socket.send(JSON.stringify(message))
       return true
     } catch (error) {

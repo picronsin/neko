@@ -175,6 +175,24 @@ func ValidatePayload(event string, raw json.RawMessage) error {
 				}
 			}
 		}
+		if selector, ok := object["selector"]; ok {
+			var selectorObject map[string]json.RawMessage
+			if err := json.Unmarshal(selector, &selectorObject); err != nil || selectorObject == nil {
+				return errors.New("payload selector must be an object")
+			}
+			if err := rejectUnknown(selectorObject, "type", "id", "bitrate"); err != nil {
+				return err
+			}
+			if err := requireString(selectorObject, "type", false); err != nil {
+				return err
+			}
+			if err := requireString(selectorObject, "id", true); err != nil {
+				return err
+			}
+			if err := requireInteger(selectorObject, "bitrate"); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 	validatePeerAudio := func(value json.RawMessage) error {
@@ -192,7 +210,7 @@ func ValidatePayload(event string, raw json.RawMessage) error {
 	}
 
 	switch event {
-	case ClientHeartbeat, SignalRestart, ControlRelease:
+	case SystemHeartbeat, ClientHeartbeat, SignalRestart, SignalClose, ControlRelease:
 		return requireNoPayload()
 	case SignalRequest:
 		object, err := requireObject()

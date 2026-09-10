@@ -468,7 +468,7 @@
     { "if": { "properties": { "event": { "const": "chat/init" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ChatInit" } } } },
     { "if": { "properties": { "event": { "const": "chat/message" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ChatMessage" } } } },
     { "if": { "properties": { "event": { "const": "chat/emote" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ChatEmote" } } } },
-    { "if": { "properties": { "event": { "const": "filetransfer/update" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/FileTransferUpdate" } } } },
+    { "if": { "properties": { "event": { "const": "filetransfer/update" } } }, "then": { "properties": { "payload": { "$ref": "#/$defs/FileTransferUpdate" } } } },
     { "if": { "properties": { "event": { "const": "openinapp/init" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/OpenInAppInit" } } } },
     { "if": { "properties": { "event": { "const": "openinapp/openlink" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/OpenInAppLink" } } } }
   ]

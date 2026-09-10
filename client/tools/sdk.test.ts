@@ -63,10 +63,56 @@ assert.equal(classifyNetworkQuality(200, 0.01, true), 'fair')
 assert.equal(classifyNetworkQuality(400, 0, true), 'poor')
 assert.equal(classifyNetworkQuality(80, 0.1, true), 'poor')
 
-assert.deepEqual(validateSignalingMessage({ event: 'system/init', payload: {} }), {
-  event: 'system/init',
-  payload: {},
-})
+assert.deepEqual(
+  validateSignalingMessage({
+    event: 'system/init',
+    payload: {
+      session_id: 'u1',
+      control_host: { id: 'u1', has_host: false, epoch: 0 },
+      screen_size: { width: 1280, height: 720, rate: 30 },
+      sessions: {},
+      settings: {
+        private_mode: false,
+        locked_logins: false,
+        locked_controls: false,
+        control_protection: false,
+        implicit_hosting: false,
+        inactive_cursors: false,
+        merciful_reconnect: true,
+        heartbeat_interval: 10,
+        control_lease_ttl: 30,
+        plugins: {},
+      },
+      touch_events: false,
+      screencast_enabled: false,
+      webrtc: { videos: [] },
+    },
+  }),
+  {
+    event: 'system/init',
+    payload: {
+      session_id: 'u1',
+      control_host: { id: 'u1', has_host: false, epoch: 0 },
+      screen_size: { width: 1280, height: 720, rate: 30 },
+      sessions: {},
+      settings: {
+        private_mode: false,
+        locked_logins: false,
+        locked_controls: false,
+        control_protection: false,
+        implicit_hosting: false,
+        inactive_cursors: false,
+        merciful_reconnect: true,
+        heartbeat_interval: 10,
+        control_lease_ttl: 30,
+        plugins: {},
+      },
+      touch_events: false,
+      screencast_enabled: false,
+      webrtc: { videos: [] },
+    },
+  },
+)
 assert.deepEqual(validateSignalingMessage({ event: 'session/cursors', payload: [] }), {
   event: 'session/cursors',
   payload: [],
@@ -81,6 +127,7 @@ assert.throws(() => validateSignalingMessage({ event: 'signal/offer', payload: {
 assert.throws(() => validateSignalingMessage({ event: 'control/renew', payload: { epoch: -1 } }), /epoch/)
 assert.doesNotThrow(() => validateProtocolPayload('keyboard/modifiers', {}))
 assert.doesNotThrow(() => validateSignalingMessage({ event: 'control/request' }))
+assert.doesNotThrow(() => validateSignalingMessage({ event: 'filetransfer/update' }))
 assert.doesNotThrow(() => validateSignalingMessage({ event: 'chat/message', payload: { id: 'u1', created: 'now', content: { text: 'hello' } } }))
 assert.throws(() => validateSignalingMessage({ event: 'client/heartbeat', payload: {} }), /must be omitted/)
 
