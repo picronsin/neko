@@ -1,8 +1,10 @@
 import * as assert from 'node:assert/strict'
+import axios from 'axios'
 import { AuthClient } from '../src/sdk/auth'
 import { ApiError, normalizeApiError } from '../src/sdk/api-error'
 import { ControlInputController } from '../src/sdk/control-input'
 import { MediaSession } from '../src/sdk/media-session'
+import { createGeneratedRestHttpClient } from '../src/sdk/openapi'
 import { RoomClient } from '../src/sdk/room'
 import { encodeMediaInput, MEDIA_OPCODE } from '../src/sdk/media-protocol'
 import { classifyNetworkQuality } from '../src/sdk/network-monitor'
@@ -49,6 +51,68 @@ async function testRoomClient() {
     { method: 'POST', url: '/api/room/control/give/user%2Fname' },
     { method: 'POST', url: '/api/room/control/reset' },
   ])
+}
+
+async function testGeneratedRestClient() {
+  const requests: Array<{ method?: string; url?: string; data?: unknown }> = []
+  const http = {
+    defaults: {
+      baseURL: 'http://localhost:8080',
+      withCredentials: true,
+      headers: { common: {} as Record<string, unknown> },
+    },
+    async request(config: { method?: string; url?: string; data?: unknown }) {
+      requests.push(config)
+      if (config.url === '/api/login') {
+        return { data: { token: 'generated-token' } }
+      }
+      if (config.url === '/api/room/control') {
+        return { data: { has_host: true, host_id: 'alice', epoch: 7 } }
+      }
+      return { data: true }
+    },
+  } as unknown as Parameters<typeof createGeneratedRestHttpClient>[0]
+  const apiURL = 'http://localhost:8080/api'
+  const rest = createGeneratedRestHttpClient(http, apiURL)
+  const auth = new AuthClient(rest, apiURL)
+  const room = new RoomClient(rest, apiURL)
+
+  assert.equal(await auth.login('alice', 'secret'), 'generated-token')
+  assert.deepEqual(await room.controlStatus(), { has_host: true, host_id: 'alice', epoch: 7 })
+  await room.giveControl('user/name')
+  assert.deepEqual(
+    requests.map(({ method, url }) => ({ method, url })),
+    [
+      { method: 'POST', url: '/api/login' },
+      { method: 'GET', url: '/api/room/control' },
+      { method: 'POST', url: '/api/room/control/give/user%2Fname' },
+    ],
+  )
+  assert.deepEqual(JSON.parse(String(requests[0].data)), { username: 'alice', password: 'secret' })
+}
+
+async function testGeneratedRestClientAgainstServer() {
+  const baseURL = process.env.NEKO_REAL_REST_BASE_URL?.replace(/\/$/, '')
+  const password = process.env.NEKO_REAL_REST_PASSWORD
+  if (!baseURL || !password) {
+    return
+  }
+
+  const http = axios.create({ baseURL, withCredentials: true })
+  const apiURL = `${baseURL}/api`
+  const rest = createGeneratedRestHttpClient(
+    http as unknown as Parameters<typeof createGeneratedRestHttpClient>[0],
+    apiURL,
+  )
+  const auth = new AuthClient(rest, apiURL)
+  const room = new RoomClient(rest, apiURL)
+  await auth.login(process.env.NEKO_REAL_REST_USER || 'demo', password)
+  try {
+    const status = await room.controlStatus()
+    assert.equal(typeof status.epoch, 'number')
+  } finally {
+    await auth.logout()
+  }
 }
 
 const normalized = normalizeApiError({ response: { status: 409, data: { message: 'control busy', error_code: 'CONTROL_CONFLICT' } } })
@@ -222,6 +286,8 @@ assert.throws(() => encodeMediaInput({ event: 'keydown', key: 1, epoch: Number.M
 
 void testAuthClient()
   .then(testRoomClient)
+  .then(testGeneratedRestClient)
+  .then(testGeneratedRestClientAgainstServer)
   .then(() => console.log('SDK contract tests passed'))
   .catch((error) => {
     console.error(error)

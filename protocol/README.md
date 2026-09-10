@@ -48,3 +48,17 @@ npm run generate:api
 
 This command uses the official OpenAPI Generator CLI configured in
 `openapitools.json`; Java is required by the CLI runtime.
+
+The generated REST client is stored in `client/src/api/generated/`. The
+framework-neutral adapter in `client/src/sdk/openapi.ts` connects its session
+and room-control operations to the existing `AuthClient` and `RoomClient`
+ports, so Vue components do not depend directly on generated code.
+
+For a local real-server REST check, set the Demo URL and password and run:
+
+```bash
+cd client
+NEKO_REAL_REST_BASE_URL=http://127.0.0.1:8080 \
+NEKO_REAL_REST_PASSWORD='your-demo-password' \
+npm run test:sdk
+```

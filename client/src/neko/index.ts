@@ -3,6 +3,7 @@ import { BaseClient, BaseEvents } from './base'
 import { EVENT } from './events'
 import { AuthClient } from '~/sdk/auth'
 import { RoomClient } from '~/sdk/room'
+import { createGeneratedRestHttpClient } from '~/sdk/openapi'
 import { NetworkQualityMonitor } from '~/sdk/network-monitor'
 import { set } from '~/utils/localstorage'
 import { NekoClientRuntime } from './runtime'
@@ -55,8 +56,9 @@ export class NekoClient extends BaseClient implements EventEmitter<NekoEvents> {
     // Keep static assets (emoji, keyboard layouts) on the application root.
     this.runtime.http.defaults.baseURL = httpURL.replace(/\/api\/ws$/, '')
     this.runtime.http.defaults.withCredentials = true
-    this.auth = new AuthClient(this.runtime.http, this.apiURL)
-    this.roomClient = new RoomClient(this.runtime.http, this.apiURL)
+    const rest = createGeneratedRestHttpClient(this.runtime.http, this.apiURL)
+    this.auth = new AuthClient(rest, this.apiURL)
+    this.roomClient = new RoomClient(rest, this.apiURL)
   }
 
   get room() {

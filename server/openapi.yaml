@@ -1465,6 +1465,9 @@ components:
 
     ControlStatus:
       type: object
+      required:
+        - has_host
+        - epoch
       properties:
         has_host:
           type: boolean
@@ -1472,6 +1475,10 @@ components:
         host_id:
           type: string
           description: The ID of the current host, if any.
+        epoch:
+          type: integer
+          format: int64
+          description: Monotonically increasing control lease epoch.
 
     ScreenConfiguration:
       type: object
