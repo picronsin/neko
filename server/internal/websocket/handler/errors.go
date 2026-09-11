@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	desktopapp "github.com/m1k1o/neko/server/internal/application/desktop"
 	"github.com/m1k1o/neko/server/internal/control"
 	"github.com/m1k1o/neko/server/pkg/protocol"
 )
@@ -18,7 +19,8 @@ func protocolError(err error) protocol.ErrorPayload {
 	case errors.Is(err, control.ErrStaleEpoch):
 		code = protocol.StaleEpoch
 	case errors.Is(err, control.ErrNotHolder), errors.Is(err, control.ErrNotHost), errors.Is(err, control.ErrNotAllowed),
-		errors.Is(err, ErrIsNotAllowedToHost), errors.Is(err, ErrIsNotTheHost), errors.Is(err, ErrIsAlreadyTheHost):
+		errors.Is(err, ErrIsNotAllowedToHost), errors.Is(err, ErrIsNotTheHost),
+		errors.Is(err, desktopapp.ErrNotHost), errors.Is(err, desktopapp.ErrClipboardForbidden):
 		code = protocol.PermissionDenied
 	default:
 		message := strings.ToLower(err.Error())

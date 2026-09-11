@@ -33,7 +33,6 @@ export const PROTOCOL_EVENT = {
   CLIPBOARD_SET: 'clipboard/set',
   KEYBOARD_MODIFIERS: 'keyboard/modifiers',
   KEYBOARD_MAP: 'keyboard/map',
-  BROADCAST_STATUS: 'broadcast/status',
   SEND_UNICAST: 'send/unicast',
   SEND_BROADCAST: 'send/broadcast',
   FILE_CHOOSER_DIALOG_OPENED: 'file_chooser_dialog/opened',

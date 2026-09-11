@@ -17,7 +17,6 @@
 export * from './api/current-session-api';
 export * from './api/general-api';
 export * from './api/members-api';
-export * from './api/room-broadcast-api';
 export * from './api/room-clipboard-api';
 export * from './api/room-control-api';
 export * from './api/room-keyboard-api';

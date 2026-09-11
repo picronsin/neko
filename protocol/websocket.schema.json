@@ -17,7 +17,7 @@
         "session/created", "session/deleted", "session/profile", "session/state", "session/cursors",
         "control/host", "control/release", "control/request", "control/renew",
         "screen/updated", "screen/set", "clipboard/updated", "clipboard/set",
-        "keyboard/modifiers", "keyboard/map", "broadcast/status", "send/unicast", "send/broadcast",
+        "keyboard/modifiers", "keyboard/map", "send/unicast", "send/broadcast",
         "file_chooser_dialog/opened", "file_chooser_dialog/closed",
         "chat/init", "chat/message", "chat/emote", "filetransfer/update", "openinapp/init", "openinapp/openlink"
       ]

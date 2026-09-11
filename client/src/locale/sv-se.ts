@@ -96,7 +96,6 @@ export const setting = {
   ignore_emotes: 'Ignorera emojis',
   chat_sound: 'Spela chattljud',
   keyboard_layout: 'Tangentbordslayout',
-  broadcast_title: 'Livesändning',
 }
 
 export const connection = {

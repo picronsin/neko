@@ -7,6 +7,7 @@ const PluginName = "chat"
 const (
 	CHAT_INIT    = "chat/init"
 	CHAT_MESSAGE = "chat/message"
+	CHAT_EMOTE   = "chat/emote"
 )
 
 type Init struct {
@@ -15,3 +16,8 @@ type Init struct {
 
 type Content = appchat.Content
 type Message = appchat.Message
+
+type Emote struct {
+	ID    string `json:"id"`
+	Emote string `json:"emote"`
+}

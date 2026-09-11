@@ -54,11 +54,16 @@
     <neko-context ref="context" />
     <div v-if="!muted" class="chat-send">
       <div class="accent" />
-      <div class="text-container">
+      <form class="text-container" @submit.prevent="send">
         <textarea ref="input" :placeholder="$t('send_a_message')" @keydown="onKeyDown" v-model="content" />
         <neko-emoji v-if="emoji" @picked="onEmojiPicked" @done="emoji = false" />
-        <i class="emoji-menu fas fa-laugh" @click.stop.prevent="onEmoji"></i>
-      </div>
+        <button type="button" class="emoji-menu" :aria-label="$t('ui.emojis')" @click.stop.prevent="onEmoji">
+          <i class="fas fa-laugh" aria-hidden="true" />
+        </button>
+        <button type="submit" class="send-button" :disabled="!content.trim()" :aria-label="$t('chat.send')">
+          <i class="fas fa-paper-plane" aria-hidden="true" />
+        </button>
+      </form>
     </div>
   </div>
 </template>
@@ -347,6 +352,8 @@
         display: flex;
 
         .emoji-menu {
+          border: 0;
+          background: transparent;
           width: 34px;
           height: 34px;
           font-size: 20px;
@@ -358,6 +365,24 @@
 
           &:hover {
             color: $style-primary;
+          }
+        }
+
+        .send-button {
+          width: 34px;
+          height: 34px;
+          margin: 5px 5px 0 0;
+          display: grid;
+          place-items: center;
+          border: 0;
+          border-radius: 8px;
+          color: $background-tertiary;
+          background: $style-primary;
+          cursor: pointer;
+
+          &:disabled {
+            cursor: not-allowed;
+            opacity: 0.42;
           }
         }
 
@@ -570,15 +595,18 @@
         return
       }
 
-      if (this.content === '') {
-        event.preventDefault()
+      this.send()
+      event.preventDefault()
+    }
+
+    send() {
+      const content = this.content.trim()
+      if (!content || this.muted) {
         return
       }
-
-      this.$accessor.chat.sendMessage(this.content)
-
+      this.$accessor.chat.sendMessage(content)
       this.content = ''
-      event.preventDefault()
+      this.$nextTick(() => this._input.focus())
     }
   }
 </script>

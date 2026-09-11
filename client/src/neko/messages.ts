@@ -10,13 +10,13 @@ export type WebSocketPayloads =
   | ChatPayload
   | ChatInitPayload
   | ChatSendPayload
+  | EmotePayload
   | EmojiSendPayload
   | ScreenResolutionPayload
   | KeyboardMapPayload
   | KeyboardModifiersPayload
   | ClipboardSetPayload
   | ControlEpochPayload
-  | BroadcastStatusPayload
 
 /*
   SYSTEM MESSAGES/PAYLOADS
@@ -68,7 +68,6 @@ export interface SettingsPayload {
 }
 
 export interface SystemAdminPayload {
-  broadcast_status: BroadcastStatusPayload
 }
 
 export interface SystemSettingsPayload extends SettingsPayload {
@@ -205,14 +204,6 @@ export interface FileTransferUpdatePayload {
 */
 export interface ScreenResolutionPayload extends ScreenResolution {
   id?: string
-}
-
-/*
-  BROADCAST PAYLOADS
-*/
-export interface BroadcastStatusPayload {
-  url: string
-  is_active: boolean
 }
 
 export type AdminLockResource = 'login' | 'control' | 'file_transfer'

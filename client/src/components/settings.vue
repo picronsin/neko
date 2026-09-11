@@ -87,31 +87,6 @@
           </li>
         </ul>
       </section>
-      <section class="settings-section" v-if="admin">
-        <h3>{{ $t('setting.group_admin') }}</h3>
-        <ul>
-          <li class="broadcast">
-            <div>
-              <span>{{ $t('setting.broadcast_title') }}</span>
-              <button
-                v-if="!broadcast_is_active"
-                @click.stop.prevent="$accessor.settings.broadcastCreate(broadcast_url)"
-              >
-                <i class="fas fa-play"></i>
-              </button>
-              <button v-else @click.stop.prevent="$accessor.settings.broadcastDestroy()" class="btn-red">
-                <i class="fas fa-stop"></i>
-              </button>
-            </div>
-            <input
-              v-model="broadcast_url"
-              :disabled="broadcast_is_active"
-              class="input"
-              :placeholder="$t('setting.broadcast_placeholder')"
-            />
-          </li>
-        </ul>
-      </section>
       <section class="settings-section" v-if="connected">
         <h3>{{ $t('setting.group_session') }}</h3>
         <ul>
@@ -412,34 +387,6 @@
               background: none;
             }
           }
-
-          &.broadcast {
-            display: flex;
-            flex-direction: column;
-
-            div {
-              margin-bottom: 10px;
-              display: flex;
-              justify-content: space-between;
-
-              button {
-                flex-shrink: 1;
-                width: auto !important;
-                margin: 0;
-                padding: 0 10px;
-
-                &.btn-red {
-                  background: #a62626;
-                }
-              }
-            }
-
-            .input {
-              text-align: left;
-              width: auto !important;
-              margin: 0;
-            }
-          }
         }
       }
     }
@@ -447,7 +394,7 @@
 </style>
 
 <script lang="ts">
-  import { Component, Ref, Watch, Vue } from 'vue-property-decorator'
+  import { Component, Ref, Vue } from 'vue-property-decorator'
 
   import Avatar from './avatar.vue'
 
@@ -459,8 +406,6 @@
   })
   export default class extends Vue {
     @Ref('avatarInput') readonly _avatarInput!: HTMLInputElement
-    private broadcast_url: string = ''
-
     get admin() {
       return this.$accessor.user.admin
     }
@@ -541,6 +486,10 @@
           reader.readAsDataURL(file)
         })
         await this.$http.post('/api/profile/avatar', { avatar })
+        const member = this.$accessor.user.member
+        if (member) {
+          this.$accessor.user.addMember({ ...member, avatar })
+        }
       } catch (error) {
         this.$notify({
           group: 'neko',
@@ -556,6 +505,10 @@
     async removeAvatar() {
       try {
         await this.$http.post('/api/profile/avatar', { avatar: '' })
+        const member = this.$accessor.user.member
+        if (member) {
+          this.$accessor.user.addMember({ ...member, avatar: '' })
+        }
       } catch (error) {
         this.$notify({
           group: 'neko',
@@ -572,19 +525,6 @@
 
     get keyboard_layout() {
       return this.$accessor.settings.keyboard_layout
-    }
-
-    get broadcast_is_active() {
-      return this.$accessor.settings.broadcast_is_active
-    }
-
-    get broadcast_url_remote() {
-      return this.$accessor.settings.broadcast_url
-    }
-
-    @Watch('broadcast_url_remote', { immediate: true })
-    onBroadcastUrlChange() {
-      this.broadcast_url = this.broadcast_url_remote
     }
 
     set keyboard_layout(value: string) {

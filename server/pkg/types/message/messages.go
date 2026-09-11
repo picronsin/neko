@@ -21,9 +21,7 @@ type SystemInit struct {
 	WebRTC            SystemWebRTC           `json:"webrtc"`
 }
 
-type SystemAdmin struct {
-	BroadcastStatus BroadcastStatus `json:"broadcast_status"`
-}
+type SystemAdmin struct{}
 
 type SystemLogs = []SystemLog
 
@@ -151,15 +149,6 @@ type KeyboardMap struct {
 
 type KeyboardModifiers struct {
 	types.KeyboardModifiers
-}
-
-/////////////////////////////
-// Broadcast
-/////////////////////////////
-
-type BroadcastStatus struct {
-	IsActive bool   `json:"is_active"`
-	URL      string `json:"url,omitempty"`
 }
 
 /////////////////////////////

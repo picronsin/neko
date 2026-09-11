@@ -128,7 +128,9 @@ export const actions = actionTree(
       if (!accessor.connection.connected || accessor.user.muted) {
         return
       }
-      $client.sendMessage(EVENT.CHAT.EMOTE, { emote })
+      // The protocol requires a sender ID. The server still derives the
+      // authoritative ID from the authenticated session before broadcasting.
+      $client.sendMessage(EVENT.CHAT.EMOTE, { id: accessor.user.id, emote })
     },
   },
 )

@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -141,12 +143,36 @@ func (h *MessageHandlerCtx) Message(session types.Session, data types.WebSocketM
 	}
 
 	if err != nil {
-		session.Send(event.SYSTEM_ERROR, protocolError(err))
-		h.logger.Warn().Err(err).
-			Str("event", data.Event).
-			Str("session_id", session.ID()).
-			Msg("message handler has failed")
+		if isStaleControlMessage(data.Event, err) {
+			// Input state can cross a control handoff or reconnect boundary. The
+			// server must reject stale host-only messages, but showing a fatal
+			// protocol dialog for them makes an otherwise healthy viewer unusable.
+			h.logger.Debug().Err(err).
+				Str("event", data.Event).
+				Str("session_id", session.ID()).
+				Msg("ignored stale control message")
+		} else {
+			session.Send(event.SYSTEM_ERROR, protocolError(err))
+			h.logger.Warn().Err(err).
+				Str("event", data.Event).
+				Str("session_id", session.ID()).
+				Msg("message handler has failed")
+		}
 	}
 
 	return true
+}
+
+func isStaleControlMessage(eventName string, err error) bool {
+	if !errors.Is(err, desktopapp.ErrNotHost) && !errors.Is(err, ErrIsNotTheHost) {
+		return false
+	}
+
+	switch eventName {
+	case event.CONTROL_RELEASE, event.CONTROL_RENEW,
+		event.CLIPBOARD_SET, event.KEYBOARD_MAP, event.KEYBOARD_MODIFIERS:
+		return true
+	default:
+		return false
+	}
 }

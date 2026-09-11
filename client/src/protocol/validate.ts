@@ -157,7 +157,10 @@ function validateSessionState(event: ProtocolEvent, payload: unknown, withId = f
   if (withId) requiredString(value, event, 'id')
   requiredBoolean(value, event, 'is_connected')
   requiredBoolean(value, event, 'is_watching')
-  for (const field of fields.slice(1)) {
+  // `is_watching` is a boolean state flag, not a timestamp. Keeping it in
+  // the generic timestamp loop rejected every system/init and session/state
+  // payload emitted by the server.
+  for (const field of ['connected_since', 'not_connected_since', 'watching_since', 'not_watching_since']) {
     if (field in value && value[field] !== null && typeof value[field] !== 'string') {
       throw new Error(`${event} payload field '${field}' must be a string or null`)
     }
@@ -185,15 +188,6 @@ function validateChatHistory(event: ProtocolEvent, payload: unknown) {
   }
   if ('avatar' in value && typeof value.avatar !== 'string') {
     throw new Error(`${event} payload field 'avatar' must be a string`)
-  }
-}
-
-function validateBroadcastStatus(event: ProtocolEvent, payload: unknown) {
-  const value = objectPayload(event, payload)
-  rejectUnknown(value, event, ['is_active', 'url'])
-  requiredBoolean(value, event, 'is_active')
-  if ('url' in value && typeof value.url !== 'string') {
-    throw new Error(`${event} payload field 'url' must be a string`)
   }
 }
 
@@ -246,7 +240,9 @@ export function validateProtocolPayload(event: ProtocolEvent, payload: unknown) 
       return
     }
     case PROTOCOL_EVENT.SIGNAL_VIDEO:
-      validatePeerVideo(event, payload)
+      // Incoming updates are the resolved PeerVideo state from the server and
+      // include its stream ID; outgoing requests use PeerVideoRequest.
+      validatePeerVideoState(event, payload)
       return
     case PROTOCOL_EVENT.SIGNAL_AUDIO:
       validatePeerAudio(event, payload)
@@ -387,8 +383,7 @@ export function validateProtocolPayload(event: ProtocolEvent, payload: unknown) 
     }
     case PROTOCOL_EVENT.SYSTEM_ADMIN: {
       const value = objectPayload(event, payload)
-      rejectUnknown(value, event, ['broadcast_status'])
-      validateBroadcastStatus(event, value.broadcast_status)
+      rejectUnknown(value, event, [])
       return
     }
     case PROTOCOL_EVENT.SYSTEM_SETTINGS:
@@ -448,9 +443,6 @@ export function validateProtocolPayload(event: ProtocolEvent, payload: unknown) 
       }
       return
     }
-    case PROTOCOL_EVENT.BROADCAST_STATUS:
-      validateBroadcastStatus(event, payload)
-      return
     case PROTOCOL_EVENT.SEND_UNICAST: {
       const value = objectPayload(event, payload)
       rejectUnknown(value, event, ['sender', 'receiver', 'subject', 'body'])

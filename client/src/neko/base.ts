@@ -40,6 +40,7 @@ export abstract class BaseClient extends EventEmitter<BaseEvents> {
     this.mediaSession = new MediaSession({
       onData: (event) => this.onData(event),
       onError: (error) => this.onError(error),
+      onDataChannelOpen: () => this.onConnected(),
       onDataChannelClosed: () => this.onDisconnected(new Error('peer data channel closed')),
     })
     this.signaling = new SignalingTransport({
@@ -498,8 +499,11 @@ export abstract class BaseClient extends EventEmitter<BaseEvents> {
       this._timeout = undefined
     }
 
-    if (!this.peerConnected || !this.socketOpen) {
-      this.emit('warn', `onConnected called while being disconnected`)
+    // Desktop input travels only over the WebRTC data channel. Do not mark a
+    // session ready when ICE alone is connected: that state previously let the
+    // UI grant/release control before the channel existed, leaving it unable
+    // to send mouse or keyboard packets.
+    if (!this.peerConnected || !this.socketOpen || !this.mediaSession.dataChannelOpen) {
       return
     }
 

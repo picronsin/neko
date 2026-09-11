@@ -102,7 +102,6 @@ export const setting = {
   ignore_emotes: 'Ignorovať smajlíky',
   chat_sound: 'Prehrávať zvuky chatu',
   keyboard_layout: 'Rozloženie klávesnice',
-  broadcast_title: 'Živé vysielanie',
 }
 
 export const connection = {

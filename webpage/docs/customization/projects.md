@@ -17,4 +17,4 @@ Tool to stream anything (e.g. Emby/Plex/Jellyfin/YouTube etc.) to VRChat without
 The default configuration of this project utilizes the integrated graphics provided by an Intel CPU.
 :::
 
-Extends Neko's [broadcast feature](/docs/v3/configuration/capture#broadcast) to relay its output via [MediaMTX](https://github.com/bluenviron/mediamtx) as an HLS/RTSP stream - intended for VRChat users who want to watch shared media (Emby, Plex, Jellyfin, YouTube, etc.) together inside VR.
+This project integrates with Neko and relays shared media through [MediaMTX](https://github.com/bluenviron/mediamtx) as an HLS/RTSP stream - intended for VRChat users who want to watch shared media (Emby, Plex, Jellyfin, YouTube, etc.) together inside VR.

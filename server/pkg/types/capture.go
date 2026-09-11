@@ -33,13 +33,6 @@ type SampleListener interface {
 	WriteSample(Sample)
 }
 
-type BroadcastManager interface {
-	Start(url string) error
-	Stop()
-	Started() bool
-	Url() string
-}
-
 type ScreencastManager interface {
 	Enabled() bool
 	Started() bool
@@ -140,7 +133,6 @@ type CaptureManager interface {
 	Start()
 	Shutdown() error
 
-	Broadcast() BroadcastManager
 	Screencast() ScreencastManager
 	Audio() StreamSinkManager
 	Video() StreamSelectorManager

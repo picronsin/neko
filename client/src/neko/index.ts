@@ -14,9 +14,7 @@ import {
   ChatInitPayload,
   EmotePayload,
   ScreenResolutionPayload,
-  BroadcastStatusPayload,
   SystemInitPayload,
-  SystemAdminPayload,
   SystemSettingsPayload,
   SessionDataPayload,
   SessionIdPayload,
@@ -63,6 +61,14 @@ export class NekoClient extends BaseClient implements EventEmitter<NekoEvents> {
 
   get room() {
     return this.roomClient
+  }
+
+  /** Synchronize local input permissions with the server's lease state. */
+  async syncControlState() {
+    const control = await this.room.controlStatus()
+    this.setControlEpoch(control.epoch)
+    this.state.remote.setEpoch(control.epoch)
+    this.state.remote.setHost(control.has_host ? control.host_id || '' : '')
   }
 
   private get state() {
@@ -147,6 +153,12 @@ export class NekoClient extends BaseClient implements EventEmitter<NekoEvents> {
   protected [EVENT.CONNECTED]() {
     this.state.user.setMember(this.id)
     this.state.connection.setConnected(true)
+    // The initial websocket event normally contains this state. Fetching it
+    // once more after WebRTC connects closes the small race where a control
+    // broadcast was sent during negotiation.
+    void this.syncControlState().catch((error: unknown) => {
+      this.ui.log.warn('failed to synchronize control state', error)
+    })
     // Screen metadata moved from the deprecated websocket events to the REST
     // room API. Load it after the session is authenticated so pointer mapping
     // is based on the actual desktop size instead of the 1280x720 defaults.
@@ -266,12 +278,7 @@ export class NekoClient extends BaseClient implements EventEmitter<NekoEvents> {
     }
   }
 
-  protected [EVENT.SYSTEM.ADMIN]({ broadcast_status }: SystemAdminPayload) {
-    this.state.settings.broadcastStatus({
-      url: broadcast_status.url,
-      isActive: broadcast_status.is_active,
-    })
-  }
+  protected [EVENT.SYSTEM.ADMIN]() {}
 
   protected [EVENT.SYSTEM.SETTINGS](settings: SystemSettingsPayload) {
     this.state.remote.setImplicitHosting(settings.implicit_hosting)
@@ -492,12 +499,6 @@ export class NekoClient extends BaseClient implements EventEmitter<NekoEvents> {
   }
 
   /////////////////////////////
-  // Broadcast Events
-  /////////////////////////////
-  protected [EVENT.BROADCAST.STATUS](payload: BroadcastStatusPayload) {
-    this.state.settings.broadcastStatus({ url: payload.url, isActive: payload.is_active })
-  }
-
   // Utilities
   protected member(id: string) {
     return this.state.user.members[id]

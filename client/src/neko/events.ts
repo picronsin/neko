@@ -64,9 +64,6 @@ export const EVENT = {
     UPDATED: PROTOCOL_EVENT.CLIPBOARD_UPDATED,
     SET: PROTOCOL_EVENT.CLIPBOARD_SET,
   },
-  BROADCAST: {
-    STATUS: PROTOCOL_EVENT.BROADCAST_STATUS,
-  },
   KEYBOARD: {
     MAP: PROTOCOL_EVENT.KEYBOARD_MAP,
     MODIFIERS: PROTOCOL_EVENT.KEYBOARD_MODIFIERS,
@@ -87,7 +84,6 @@ export type WebSocketEvents =
   | ScreenEvents
   | ClipboardEvents
   | KeyboardEvents
-  | BroadcastEvents
 
 export type ControlEvents =
   | typeof EVENT.CONTROL.HOST
@@ -131,5 +127,3 @@ export type ScreenEvents = typeof EVENT.SCREEN.UPDATED | typeof EVENT.SCREEN.SET
 export type ClipboardEvents = typeof EVENT.CLIPBOARD.UPDATED | typeof EVENT.CLIPBOARD.SET
 
 export type KeyboardEvents = typeof EVENT.KEYBOARD.MAP | typeof EVENT.KEYBOARD.MODIFIERS
-
-export type BroadcastEvents = typeof EVENT.BROADCAST.STATUS

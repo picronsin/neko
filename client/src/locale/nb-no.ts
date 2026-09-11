@@ -96,7 +96,6 @@ export const setting = {
   ignore_emotes: 'Ignorer smilefjes',
   chat_sound: 'Sludringslyd',
   keyboard_layout: 'Tastaturoppsett',
-  broadcast_title: 'Direktesending',
 }
 
 export const connection = {

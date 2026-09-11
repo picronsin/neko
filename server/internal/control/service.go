@@ -12,7 +12,6 @@ import (
 var (
 	ErrNotAllowed  = errors.New("session is not allowed to control")
 	ErrNotHost     = errors.New("session is not the control holder")
-	ErrAlreadyHost = errors.New("session already holds control")
 	ErrUnavailable = errors.New("control lease is unavailable")
 )
 
@@ -52,9 +51,10 @@ func (s *Service) Request(session types.Session) (RequestResult, error) {
 	if !session.Profile().CanHost || session.PrivateModeEnabled() {
 		return RequestResult{}, ErrNotAllowed
 	}
-	if session.IsHost() {
-		return RequestResult{}, ErrAlreadyHost
-	}
+	// Requesting control is idempotent for the current holder. This can happen
+	// when a click races the control/host event or when a reconnect restores
+	// the UI before the latest ownership state is rendered. Let the lease
+	// manager renew the current holder instead of returning a protocol error.
 	if !domain.CanRequestControl(domain.Member{
 		ID: session.ID(),
 		Permission: domain.Permission{

@@ -37,18 +37,6 @@ const FeatureList: FeatureItem[] = [
   },
   {
     isEven: i++ % 2 === 0,
-    title: 'Live Broadcasting',
-    Svg: require('@site/static/img/undraw_online_media.svg').default,
-    description: (
-      <>
-        Stream your room's content live to platforms like Twitch, YouTube, and more via RTMP. As the host, you have full
-        control over the stream; set the RTMP URL and stream key, start or stop the broadcast at any time. Even if no
-        participants are online, the stream keeps running, making 24/7 broadcasting effortless.
-      </>
-    ),
-  },
-  {
-    isEven: i++ % 2 === 0,
     title: 'Persistent Browser',
     Svg: require('@site/static/img/undraw_safe.svg').default,
     description: (

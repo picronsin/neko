@@ -96,7 +96,6 @@ export const setting = {
   ignore_emotes: 'Abaikan Emoticon',
   chat_sound: 'Nyalakan Bunyi Obrolan',
   keyboard_layout: 'Tata Letak Papan Tik',
-  broadcast_title: 'Siaran Langsung',
 }
 
 export const connection = {

@@ -96,7 +96,6 @@ export const setting = {
   ignore_emotes: 'Ignorer les émoticônes',
   chat_sound: 'Son du chat',
   keyboard_layout: 'Disposition du clavier',
-  broadcast_title: 'Diffusion en direct',
 }
 
 export const connection = {

@@ -48,6 +48,19 @@ func (m *Manager) sendMessage(session types.Session, content Content) {
 	_ = m.service.Send(session, appchat.Content(content))
 }
 
+func (m *Manager) sendEmote(session types.Session, emote string) {
+	if emote == "" {
+		return
+	}
+	m.sessions.Range(func(target types.Session) bool {
+		settings, err := m.settingsForSession(target)
+		if err == nil && settings.CanReceive {
+			target.Send(CHAT_EMOTE, Emote{ID: session.ID(), Emote: emote})
+		}
+		return true
+	})
+}
+
 func (m *Manager) Start() error {
 	// send init message once a user connects
 	m.sessions.OnConnected(func(session types.Session) {
@@ -88,6 +101,25 @@ func (m *Manager) WebSocketHandler(session types.Session, msg types.WebSocketMes
 		}
 
 		m.sendMessage(session, content)
+		return true
+	case CHAT_EMOTE:
+		var content Emote
+		if err := json.Unmarshal(msg.Payload, &content); err != nil {
+			m.logger.Error().Err(err).Msg("failed to unmarshal chat emote")
+			return true
+		}
+
+		settings, err := m.settingsForSession(session)
+		if err != nil {
+			m.logger.Error().Err(err).Msg("error checking chat emote permissions")
+			return true
+		}
+		if !settings.CanSend {
+			m.logger.Warn().Msg("not allowed to send chat emotes")
+			return true
+		}
+
+		m.sendEmote(session, content.Emote)
 		return true
 	}
 	return false

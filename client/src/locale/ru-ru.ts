@@ -96,7 +96,6 @@ export const setting = {
   ignore_emotes: 'Игнорировать эмоции',
   chat_sound: 'Проигрывать звук чата',
   keyboard_layout: 'Раскладка клавиатуры',
-  broadcast_title: 'Прямой эфир',
 }
 
 export const connection = {

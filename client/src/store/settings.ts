@@ -19,9 +19,6 @@ export const state = () => {
     keyboard_layout: get<string>('keyboard_layout', 'us'),
 
     keyboard_layouts_list: {} as KeyboardLayouts,
-
-    broadcast_is_active: false,
-    broadcast_url: '',
   }
 }
 
@@ -66,10 +63,6 @@ export const mutations = mutationTree(state, {
   setKeyboardLayoutsList(state, value: KeyboardLayouts) {
     state.keyboard_layouts_list = value
   },
-  setBroadcastStatus(state, { url, isActive }) {
-    state.broadcast_url = url
-    state.broadcast_is_active = isActive
-  },
 })
 
 export const actions = actionTree(
@@ -82,16 +75,6 @@ export const actions = actionTree(
       } catch (err: any) {
         console.error(err)
       }
-    },
-
-    broadcastStatus(store, { url, isActive }) {
-      accessor.settings.setBroadcastStatus({ url, isActive })
-    },
-    broadcastCreate(store, url: string) {
-      $http.post('/api/room/broadcast/start', { url })
-    },
-    broadcastDestroy() {
-      $http.post('/api/room/broadcast/stop')
     },
   },
 )

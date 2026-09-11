@@ -390,19 +390,3 @@ I: [pulseaudio] protocol-native.c: Connection died.
 ```
 
 These are just logs from pulseaudio. Unless you have audio issues, you can ignore them.
-
-### Broadcast pipeline not working with some ingest servers {#broadcast-pipeline-not-working}
-
-See [related issue](https://github.com/m1k1o/neko/issues/276).
-
-```
-Could not connect to RTMP stream "'rtmp://<ingest-url>/live/<stream-key-removed> live=1'" for writing
-```
-
-Some ingest servers require the `live=1` parameter in the URL (e.g. `nginx-rtmp-module`). Some do not and do not accept apostrophes (e.g. `owncast`). You can try to change the pipeline to:
-
-```yaml
-NEKO_CAPTURE_BROADCAST_PIPELINE: "flvmux name=mux ! rtmpsink location={url} pulsesrc device={device} ! audio/x-raw,channels=2 ! audioconvert ! voaacenc ! mux. ximagesrc display-name={display} show-pointer=false use-damage=false ! video/x-raw,framerate=28/1 ! videoconvert ! queue ! x264enc bframes=0 key-int-max=0 byte-stream=true tune=zerolatency speed-preset=veryfast ! mux."
-```
-
-See more details in broadcast pipeline [documentation](/docs/v3/configuration/capture#broadcast.pipeline).

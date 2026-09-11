@@ -4,20 +4,37 @@
       <li v-for="emote in recent" :key="emote">
         <div :class="['emote', emote]" @mousedown.stop.prevent="startSendingEmotes(emote)" />
       </li>
-      <li>
-        <i @click.stop.prevent="open" class="fas fa-grin-beam"></i>
+      <li class="picker-slot">
+        <button
+          type="button"
+          class="picker-toggle"
+          aria-label="表情"
+          :aria-expanded="pickerOpen ? 'true' : 'false'"
+          @click="togglePicker"
+        >
+          <i class="fas fa-grin-beam" aria-hidden="true"></i>
+        </button>
       </li>
     </ul>
-    <vue-context class="context" ref="context">
-      <li v-for="emote in emotes" :key="emote">
-        <div @click="sendEmote(emote)" :class="['emote', emote]" />
-      </li>
-    </vue-context>
+    <div v-show="pickerOpen" class="emote-picker" role="menu">
+      <button
+        v-for="emote in emotes"
+        :key="emote"
+        type="button"
+        class="emote-option"
+        :aria-label="emote"
+        @click="selectEmote(emote)"
+      >
+        <div :class="['emote', emote]" />
+      </button>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
   .emotes {
+    position: relative;
+
     ul {
       display: flex;
       flex-direction: row;
@@ -29,13 +46,33 @@
         margin: 0 5px;
 
         i,
-        div {
+        div,
+        button {
           cursor: pointer;
         }
       }
     }
 
-    .context {
+    .picker-toggle,
+    .emote-option {
+      border: 0;
+      color: inherit;
+      font: inherit;
+    }
+
+    .picker-toggle {
+      background: transparent;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      list-style: none;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+    }
+
+    .emote-picker {
       background-color: $background-floating;
       background-clip: padding-box;
       border-radius: 0.25rem;
@@ -44,19 +81,21 @@
       padding: 5px;
       width: 220px;
       z-index: 1500;
-      position: fixed;
-      list-style: none;
+      position: absolute;
+      bottom: calc(100% + 0.5rem);
+      right: 0;
       box-sizing: border-box;
-      max-height: calc(100% - 50px);
+      max-height: min(340px, 60vh);
+      overflow-y: auto;
       color: $interactive-normal;
       flex-wrap: wrap;
       user-select: none;
       box-shadow: $elevation-high;
 
-      > li {
+      .emote-option {
+        background: transparent;
         margin: 0;
         position: relative;
-        align-content: center;
         padding: 5px;
         border-radius: 3px;
 
@@ -66,13 +105,13 @@
         }
 
         &:hover,
-        &:focus {
+        &:focus-visible {
           text-decoration: none;
           background-color: $background-modifier-hover;
           color: $interactive-hover;
         }
 
-        &:focus {
+        &:focus-visible {
           outline: 0;
         }
       }
@@ -85,21 +124,15 @@
 </style>
 
 <script lang="ts">
-  import { Vue, Ref, Component } from 'vue-property-decorator'
+  import { Vue, Component } from 'vue-property-decorator'
   import { get, set } from '../utils/localstorage'
-
-  // @ts-ignore
-  import { VueContext } from 'vue-context'
 
   @Component({
     name: 'neko-emotes',
-    components: {
-      'vue-context': VueContext,
-    },
   })
   export default class extends Vue {
-    @Ref('context') readonly context!: any
     recent: string[] = JSON.parse(get('emote_recent', '[]'))
+    pickerOpen = false
 
     get emotes() {
       return [
@@ -157,10 +190,6 @@
       return this.$accessor.user.muted
     }
 
-    open(event: MouseEvent) {
-      this.context.open(event)
-    }
-
     sendEmote(emote: string) {
       if (!this.recent.includes(emote)) {
         if (this.recent.length > 4) {
@@ -170,6 +199,15 @@
         set('emote_recent', JSON.stringify(this.recent))
       }
       this.$accessor.chat.sendEmote(emote)
+    }
+
+    selectEmote(emote: string) {
+      this.sendEmote(emote)
+      this.pickerOpen = false
+    }
+
+    togglePicker() {
+      this.pickerOpen = !this.pickerOpen
     }
 
     private interval!: number
@@ -188,5 +226,6 @@
         clearInterval(this.interval)
       }
     }
+
   }
 </script>

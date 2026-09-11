@@ -7,7 +7,7 @@ The files in this directory are the protocol source of truth:
 - `websocket.schema.json` defines the canonical `{event,payload}` envelope.
 - `payloads.schema.json` defines the event-specific payloads for system
   lifecycle, signaling, sessions, control, screen, clipboard, keyboard,
-  broadcast, opaque messages, chat, file transfer, plugins, and protocol
+  opaque messages, chat, file transfer, plugins, and protocol
   errors.
 - `media-input.schema.json` defines the binary WebRTC DataChannel input.
 

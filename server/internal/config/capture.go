@@ -39,13 +39,6 @@ type Capture struct {
 	AudioCodec    codec.RTPCodec
 	AudioPipeline string
 
-	BroadcastAudioBitrate int
-	BroadcastVideoBitrate int
-	BroadcastPreset       string
-	BroadcastPipeline     string
-	BroadcastUrl          string
-	BroadcastAutostart    bool
-
 	ScreencastEnabled  bool
 	ScreencastRate     string
 	ScreencastQuality  string
@@ -125,37 +118,6 @@ func (Capture) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().Bool("capture.video.show_pointer", true, "show mouse pointer in captured video, overrides show_pointer of all video pipelines")
 	if err := viper.BindPFlag("capture.video.show_pointer", cmd.PersistentFlags().Lookup("capture.video.show_pointer")); err != nil {
-		return err
-	}
-
-	// broadcast
-	cmd.PersistentFlags().Int("capture.broadcast.audio_bitrate", 128, "broadcast audio bitrate in KB/s")
-	if err := viper.BindPFlag("capture.broadcast.audio_bitrate", cmd.PersistentFlags().Lookup("capture.broadcast.audio_bitrate")); err != nil {
-		return err
-	}
-
-	cmd.PersistentFlags().Int("capture.broadcast.video_bitrate", 4096, "broadcast video bitrate in KB/s")
-	if err := viper.BindPFlag("capture.broadcast.video_bitrate", cmd.PersistentFlags().Lookup("capture.broadcast.video_bitrate")); err != nil {
-		return err
-	}
-
-	cmd.PersistentFlags().String("capture.broadcast.preset", "veryfast", "broadcast speed preset for h264 encoding")
-	if err := viper.BindPFlag("capture.broadcast.preset", cmd.PersistentFlags().Lookup("capture.broadcast.preset")); err != nil {
-		return err
-	}
-
-	cmd.PersistentFlags().String("capture.broadcast.pipeline", "", "gstreamer pipeline used for broadcasting")
-	if err := viper.BindPFlag("capture.broadcast.pipeline", cmd.PersistentFlags().Lookup("capture.broadcast.pipeline")); err != nil {
-		return err
-	}
-
-	cmd.PersistentFlags().String("capture.broadcast.url", "", "initial URL for broadcasting, setting this value will automatically start broadcasting")
-	if err := viper.BindPFlag("capture.broadcast.url", cmd.PersistentFlags().Lookup("capture.broadcast.url")); err != nil {
-		return err
-	}
-
-	cmd.PersistentFlags().Bool("capture.broadcast.autostart", true, "automatically start broadcasting when neko starts and broadcast_url is set")
-	if err := viper.BindPFlag("capture.broadcast.autostart", cmd.PersistentFlags().Lookup("capture.broadcast.autostart")); err != nil {
 		return err
 	}
 
@@ -309,14 +271,6 @@ func (s *Capture) Set() {
 		log.Warn().Str("codec", audioCodec).Msgf("unknown audio codec, using Opus")
 		s.AudioCodec = codec.Opus()
 	}
-
-	// broadcast
-	s.BroadcastAudioBitrate = viper.GetInt("capture.broadcast.audio_bitrate")
-	s.BroadcastVideoBitrate = viper.GetInt("capture.broadcast.video_bitrate")
-	s.BroadcastPreset = viper.GetString("capture.broadcast.preset")
-	s.BroadcastPipeline = viper.GetString("capture.broadcast.pipeline")
-	s.BroadcastUrl = viper.GetString("capture.broadcast.url")
-	s.BroadcastAutostart = viper.GetBool("capture.broadcast.autostart")
 
 	// screencast
 	s.ScreencastEnabled = viper.GetBool("capture.screencast.enabled")

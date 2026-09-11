@@ -113,21 +113,3 @@ func (s *Service) SetClipboardBinary(mime string, data []byte) error {
 func (s *Service) ClipboardTargets() ([]string, error) {
 	return s.desktop.ClipboardGetTargets()
 }
-
-func (s *Service) BroadcastStatus() (bool, string) {
-	broadcast := s.capture.Broadcast()
-	return broadcast.Started(), broadcast.Url()
-}
-
-func (s *Service) StartBroadcast(url string) error {
-	return s.capture.Broadcast().Start(url)
-}
-
-func (s *Service) StopBroadcast() {
-	s.capture.Broadcast().Stop()
-}
-
-func (s *Service) BroadcastStatusChanged() {
-	active, url := s.BroadcastStatus()
-	s.sessions.AdminBroadcast(event.BROADCAST_STATUS, message.BroadcastStatus{IsActive: active, URL: url})
-}

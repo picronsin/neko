@@ -13,7 +13,6 @@ This guide will show you how to configure the audio and video capture settings i
 Neko uses [Gstreamer](https://gstreamer.freedesktop.org/) to capture and encode audio and video in the following scenarios:
 
 - WebRTC clients use the [Video](#video) and [Audio](#audio) pipelines to receive the audio and video streams from the server.
-- The [Broadcast](#broadcast) feature allows you to broadcast the audio and video to a third-party service using RTMP.
 - The WebRTC Fallback mechanism allows you to capture the display in the form of JPEG images and serve them over HTTP using [Screencast](#screencast).
 - Clients can share their [Webcam](#webcam) and [Microphone](#microphone) with the server using WebRTC.
 
@@ -49,7 +48,7 @@ The Gstreamer pipeline is started when the first client requests the video strea
 - <Def id="video.ids" /> is a list of pipeline ids that are defined in the <Opt id="video.pipelines" /> section. The first pipeline in the list will be the default pipeline.
 - <Def id="video.pipeline" /> is a shorthand for defining [Gstreamer pipeline description](#video.gst_pipeline) for a single pipeline. This is option is ignored if <Opt id="video.pipelines" /> is defined.
 - <Def id="video.pipelines" /> is a dictionary of pipeline configurations. Each pipeline configuration is defined by a unique pipeline id. They can be defined in two ways: either by building the pipeline dynamically using [Expression-Driven Configuration](#video.expression) or by defining the pipeline using a [Gstreamer Pipeline Description](#video.gst_pipeline).
-- <Def id="video.show_pointer" /> overrides <Opt id="video.pipelines.show_pointer" /> for every video pipeline, only if explicitly set (per-pipeline `show_pointer` in `config.yaml` is left untouched when this flag is unset). It also controls the mouse pointer for the [Broadcast](#broadcast) and [Screencast](#screencast) pipelines, which do not have a per-pipeline setting of their own.
+- <Def id="video.show_pointer" /> overrides <Opt id="video.pipelines.show_pointer" /> for every video pipeline, only if explicitly set (per-pipeline `show_pointer` in `config.yaml` is left untouched when this flag is unset). It also controls the mouse pointer for the [Screencast](#screencast) pipeline.
 
 ### Expression-Driven Configuration {#video.expression}
 
@@ -364,87 +363,6 @@ capture:
         bitrate=320000
       ! appsink name=appsink
 ```
-
-</details>
-
-## Broadcast {#broadcast}
-
-Neko allows you to broadcast out-of-the-box the display and audio capture to a third-party service. This can be used to broadcast the display and audio to a streaming service like [Twitch](https://www.twitch.tv/) or [YouTube](https://www.youtube.com/), or to a custom RTMP server like [OBS](https://obsproject.com/), [Nginx RTMP module](https://github.com/arut/nginx-rtmp-module), or [MediaMTX](https://github.com/bluenviron/mediamtx).
-
-The Gstreamer pipeline is started when the broadcast is started and is stopped when the broadcast is stopped regardless of the clients connected.
-
-<ConfigurationTab options={configOptions} filter={[
-  "capture.broadcast.audio_bitrate",
-  "capture.broadcast.video_bitrate",
-  "capture.broadcast.preset",
-  "capture.broadcast.pipeline",
-  "capture.broadcast.url",
-  "capture.broadcast.autostart",
-]} comments={false} />
-
-The default encoder uses `h264` for video and `aac` for audio, muxed in the `flv` container and sent over the `rtmp` protocol. You can change the encoder settings by setting a custom Gstreamer pipeline description in the <Opt id="broadcast.pipeline" /> parameter.
-
-- <Def id="broadcast.audio_bitrate" /> and <Def id="broadcast.video_bitrate" /> are the bitrate settings for the default audio and video encoders expressed in kilobits per second.
-- <Def id="broadcast.preset" /> is the encoding speed preset for the default video encoder. See available presets [here](https://gstreamer.freedesktop.org/documentation/x264/index.html?gi-language=c#GstX264EncPreset).
-- <Def id="broadcast.pipeline" /> when set, encoder settings above are ignored and the custom Gstreamer pipeline description is used. In the pipeline, you can use `{hostname}`, `{display}`, `{device}` and `{url}` as placeholders for the X display name, pulseaudio audio device name, and broadcast URL respectively.
-- <Def id="broadcast.url" /> is the URL of the RTMP server where the broadcast will be sent e.g. `rtmp://<server>/<application>/<stream_key>`. This can be set later using the API if the URL is not known at the time of configuration or is expected to change.
-- <Def id="broadcast.autostart" /> is a boolean value that determines whether the broadcast should start automatically when neko starts, works only if the URL is set.
-
-<details>
-  <summary>Example pipeline configuration</summary>
-
-<Tabs>
-  <TabItem value="x264" label="X264 configuration">
-
-    ```yaml title="config.yaml"
-    capture:
-      broadcast:
-        pipeline: |
-          flvmux name=mux
-            ! rtmpsink location={url}
-          pulsesrc device={device}
-            ! audio/x-raw,channels=2
-            ! audioconvert
-            ! voaacenc
-            ! mux.
-          ximagesrc display-name={display} show-pointer=false use-damage=false
-            ! video/x-raw,framerate=28/1
-            ! videoconvert
-            ! queue
-            ! x264enc bframes=0 key-int-max=0 byte-stream=true tune=zerolatency speed-preset=veryfast
-            ! mux.
-    ```
-
-  </TabItem>
-  <TabItem value="nvh264enc" label="NVENC H264 configuration">
-
-    ```yaml title="config.yaml"
-    capture:
-      broadcast:
-        pipeline: |
-          flvmux name=mux
-            ! rtmpsink location={url}
-          pulsesrc device={device}
-            ! audio/x-raw,channels=2
-            ! audioconvert
-            ! voaacenc
-            ! mux.
-          ximagesrc display-name={display} show-pointer=false use-damage=false
-            ! video/x-raw,framerate=30/1
-            ! videoconvert
-            ! queue
-            ! video/x-raw,format=NV12
-            ! nvautogpuh264enc name=encoder preset=low-latency-hq gop-size=25 spatial-aq=true temporal-aq=true bitrate=2800 vbv-buffer-size=2800 rc-mode=6
-            ! h264parse config-interval=-1
-            ! video/x-h264,stream-format=byte-stream,profile=high
-            ! h264parse
-            ! mux.
-    ```
-
-    This configuration requires [Nvidia GPU](https://developer.nvidia.com/cuda-gpus) with [NVENC](https://developer.nvidia.com/nvidia-video-codec-sdk) support and [Nvidia docker image](/docs/v3/installation/docker-images#nvidia) of neko. Use `nvautogpuh264enc` for NVIDIA driver 590+ (GStreamer 1.22+), or substitute `nvh264enc` for older setups.
-
-  </TabItem>
-</Tabs>
 
 </details>
 

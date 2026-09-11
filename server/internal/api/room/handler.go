@@ -66,12 +66,6 @@ func (h *RoomHandler) Route(r types.Router) {
 		r.Get("/", h.settingsGet)
 	})
 
-	r.With(auth.AdminsOnly).Route("/broadcast", func(r types.Router) {
-		r.Get("/", h.broadcastStatus)
-		r.Post("/start", h.broadcastStart)
-		r.Post("/stop", h.broadcastStop)
-	})
-
 	r.With(auth.CanAccessClipboardOnly).With(auth.HostsOnly).Route("/clipboard", func(r types.Router) {
 		r.Get("/", h.clipboardGetText)
 		r.Post("/", h.clipboardSetText)

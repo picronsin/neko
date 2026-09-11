@@ -3,7 +3,6 @@ package capture
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -20,7 +19,6 @@ type CaptureManagerCtx struct {
 	config  *cfg.Capture
 
 	// sinks
-	broadcast     *BroacastManagerCtx
 	screencast    *ScreencastManagerCtx
 	audio         *StreamSinkManagerCtx
 	video         *StreamSelectorManagerCtx
@@ -127,37 +125,6 @@ func New(desktop types.DesktopManager, config *cfg.Capture) *CaptureManagerCtx {
 		config:  config,
 
 		// sinks
-		broadcast: broadcastNew(func(url string) (string, error) {
-			if config.BroadcastPipeline != "" {
-				var pipeline = config.BroadcastPipeline
-				if hostname, err := os.Hostname(); err == nil {
-					// replace {hostname} with valid hostname
-					pipeline = strings.Replace(pipeline, "{hostname}", hostname, 1)
-				}
-				// replace {display} with valid display
-				pipeline = strings.Replace(pipeline, "{display}", config.Display, 1)
-				// replace {device} with valid device
-				pipeline = strings.Replace(pipeline, "{device}", config.AudioDevice, 1)
-				// replace {url} with valid URL
-				return strings.Replace(pipeline, "{url}", url, 1), nil
-			}
-
-			return fmt.Sprintf(
-				"flvmux name=mux ! rtmpsink location='%s live=1' "+
-					"pulsesrc device=%s "+
-					"! audio/x-raw,channels=2 "+
-					"! audioconvert "+
-					"! queue "+
-					"! voaacenc bitrate=%d "+
-					"! mux. "+
-					"ximagesrc display-name=%s show-pointer=%v use-damage=false "+
-					"! video/x-raw "+
-					"! videoconvert "+
-					"! queue "+
-					"! x264enc threads=4 bitrate=%d key-int-max=15 byte-stream=true tune=zerolatency speed-preset=%s "+
-					"! mux.", url, config.AudioDevice, config.BroadcastAudioBitrate*1000, config.Display, config.VideoShowPointer, config.BroadcastVideoBitrate, config.BroadcastPreset,
-			), nil
-		}, config.BroadcastUrl, config.BroadcastAutostart),
 		screencast: screencastNew(config.ScreencastEnabled, func() string {
 			if config.ScreencastPipeline != "" {
 				// replace {display} with valid display
@@ -244,20 +211,10 @@ func New(desktop types.DesktopManager, config *cfg.Capture) *CaptureManagerCtx {
 }
 
 func (manager *CaptureManagerCtx) Start() {
-	if manager.broadcast.Started() {
-		if err := manager.broadcast.createPipeline(); err != nil {
-			manager.logger.Panic().Err(err).Msg("unable to create broadcast pipeline")
-		}
-	}
-
 	manager.desktop.OnBeforeScreenSizeChange(func() {
 		manager.forEachVideo(func(video *StreamSelectorManagerCtx) {
 			video.destroyPipelines()
 		})
-
-		if manager.broadcast.Started() {
-			manager.broadcast.destroyPipeline()
-		}
 
 		if manager.screencast.Started() {
 			manager.screencast.destroyPipeline()
@@ -275,13 +232,6 @@ func (manager *CaptureManagerCtx) Start() {
 			manager.logger.Panic().Err(videoErr).Msg("unable to recreate video pipelines")
 		}
 
-		if manager.broadcast.Started() {
-			err := manager.broadcast.createPipeline()
-			if err != nil && !errors.Is(err, types.ErrCapturePipelineAlreadyExists) {
-				manager.logger.Panic().Err(err).Msg("unable to recreate broadcast pipeline")
-			}
-		}
-
 		if manager.screencast.Started() {
 			err := manager.screencast.createPipeline()
 			if err != nil && !errors.Is(err, types.ErrCapturePipelineAlreadyExists) {
@@ -294,7 +244,6 @@ func (manager *CaptureManagerCtx) Start() {
 func (manager *CaptureManagerCtx) Shutdown() error {
 	manager.logger.Info().Msgf("shutdown")
 
-	manager.broadcast.shutdown()
 	manager.screencast.shutdown()
 
 	manager.audio.shutdown()
@@ -306,10 +255,6 @@ func (manager *CaptureManagerCtx) Shutdown() error {
 	manager.microphone.shutdown()
 
 	return nil
-}
-
-func (manager *CaptureManagerCtx) Broadcast() types.BroadcastManager {
-	return manager.broadcast
 }
 
 func (manager *CaptureManagerCtx) Screencast() types.ScreencastManager {

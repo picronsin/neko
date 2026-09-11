@@ -59,15 +59,7 @@ func (h *MessageHandlerCtx) systemInit(session types.Session) error {
 }
 
 func (h *MessageHandlerCtx) systemAdmin(session types.Session) error {
-	active, url := h.desktopApp.BroadcastStatus()
-	session.Send(
-		event.SYSTEM_ADMIN,
-		message.SystemAdmin{
-			BroadcastStatus: message.BroadcastStatus{
-				IsActive: active,
-				URL:      url,
-			},
-		})
+	session.Send(event.SYSTEM_ADMIN, message.SystemAdmin{})
 
 	return nil
 }

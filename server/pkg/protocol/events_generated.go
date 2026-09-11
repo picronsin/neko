@@ -34,7 +34,6 @@ const (
 	ClipboardSet            = "clipboard/set"
 	KeyboardModifiers       = "keyboard/modifiers"
 	KeyboardMap             = "keyboard/map"
-	BroadcastStatus         = "broadcast/status"
 	SendUnicast             = "send/unicast"
 	SendBroadcast           = "send/broadcast"
 	FileChooserDialogOpened = "file_chooser_dialog/opened"
@@ -80,7 +79,6 @@ var knownEvents = map[string]struct{}{
 	ClipboardSet:            {},
 	KeyboardModifiers:       {},
 	KeyboardMap:             {},
-	BroadcastStatus:         {},
 	SendUnicast:             {},
 	SendBroadcast:           {},
 	FileChooserDialogOpened: {},

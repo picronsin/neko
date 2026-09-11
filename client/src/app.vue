@@ -140,8 +140,9 @@
         margin: 0 $party-gutter $party-gutter;
         min-height: 0;
         max-width: none;
-        flex-direction: column;
-        display: flex;
+        display: grid;
+        grid-template-rows: auto auto;
+        gap: clamp(0.2rem, 0.6vw, 0.45rem);
         padding: clamp(0.45rem, 1vw, 0.75rem) clamp(0.65rem, 1.3vw, 0.875rem);
         overflow: visible;
         border: 1px solid rgba(#fff, 0.12);
@@ -151,7 +152,7 @@
         backdrop-filter: blur(18px) saturate(130%);
 
         > .members {
-          flex: 0 0 auto;
+          grid-row: 1;
           height: auto;
           min-height: $party-member-rail-height;
           position: relative;
@@ -159,18 +160,20 @@
         }
 
         .room-menu {
+          grid-row: 2;
           max-width: 100%;
-          flex: 1 1 auto;
           min-height: $party-control-height;
-          display: flex;
+          display: grid;
+          grid-template-columns: minmax(8rem, auto) minmax(0, 1fr) minmax(8rem, auto);
+          grid-template-areas: 'settings controls emotes';
           align-items: center;
           gap: clamp(0.35rem, 1vw, 0.75rem);
           position: relative;
           z-index: 2;
 
           .settings {
+            grid-area: settings;
             margin-left: 0;
-            flex: 0 1 auto;
             min-width: 0;
             justify-content: flex-start;
             align-items: center;
@@ -178,7 +181,7 @@
           }
 
           .controls {
-            flex: 1 1 auto;
+            grid-area: controls;
             min-width: 0;
             min-height: $party-control-height;
             padding: 0 8px;
@@ -191,19 +194,26 @@
             overflow: visible;
 
             > ul {
+              width: 100%;
               display: flex;
-              flex: 1 1 auto;
+              flex: 0 1 auto;
               min-width: 0;
               max-width: 100%;
-              flex-wrap: wrap;
-              row-gap: 2px;
-              justify-content: center;
+              flex-wrap: nowrap;
+              justify-content: flex-start;
+              overflow-x: auto;
+              overflow-y: hidden;
+              scrollbar-width: thin;
+
+              > li {
+                flex: 0 0 auto;
+              }
             }
           }
 
           .emotes {
+            grid-area: emotes;
             margin: 0;
-            flex: 0 1 auto;
             min-width: 0;
             justify-content: flex-end;
             align-items: center;
@@ -305,7 +315,7 @@
             }
 
             .emotes {
-              flex: 0 1 auto;
+              min-width: 0;
             }
           }
         }
@@ -315,6 +325,11 @@
 
   @media only screen and (max-width: 480px) {
     #neko .neko-main .room-container .room-menu {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        'settings emotes'
+        'controls controls';
+
       .settings {
         .menu-actions {
           gap: 2px;
@@ -331,6 +346,19 @@
           font-size: 10px;
         }
       }
+
+      .emotes {
+        justify-content: flex-end;
+      }
+    }
+  }
+
+  @media only screen and (max-width: 360px) {
+    #neko .neko-main .room-container .room-menu {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        'settings'
+        'controls';
 
       .emotes {
         display: none;

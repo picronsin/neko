@@ -65,6 +65,7 @@ export const mutations = mutationTree(state, {
     }
   },
   reset(state) {
+    state.id = ''
     state.members = {}
   },
 })

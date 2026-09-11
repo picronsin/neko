@@ -96,7 +96,6 @@ export const setting = {
   ignore_emotes: '絵文字を無視する',
   chat_sound: 'チャットで音を再生する',
   keyboard_layout: 'キーボード配列',
-  broadcast_title: 'ライブ配信',
 }
 
 export const connection = {

@@ -91,6 +91,9 @@ func (m *Manager) broadcastUpdate() {
 	m.mu.RLock()
 	fileList := m.fileList
 	m.mu.RUnlock()
+	if fileList == nil {
+		fileList = []Item{}
+	}
 
 	m.sessions.Broadcast(FILETRANSFER_UPDATE, Message{
 		Enabled:      m.config.Enabled,
@@ -106,6 +109,9 @@ func (m *Manager) sendUpdate(session types.Session) {
 	m.mu.RLock()
 	fileList := m.fileList
 	m.mu.RUnlock()
+	if fileList == nil {
+		fileList = []Item{}
+	}
 
 	session.Send(FILETRANSFER_UPDATE, Message{
 		Enabled:      m.config.Enabled,

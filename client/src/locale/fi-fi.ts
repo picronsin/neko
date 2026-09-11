@@ -96,7 +96,6 @@ export const setting = {
   ignore_emotes: 'Estä emojit',
   chat_sound: 'Soita viesti ääni',
   keyboard_layout: 'Näppäimistöasettelu',
-  broadcast_title: 'Suora Lähetys',
 }
 
 export const connection = {

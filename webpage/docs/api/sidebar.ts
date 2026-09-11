@@ -201,35 +201,6 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
-      label: "Room Broadcast",
-      link: {
-        type: "doc",
-        id: "api/room-broadcast",
-      },
-      collapsed: false,
-      items: [
-        {
-          type: "doc",
-          id: "api/broadcast-status",
-          label: "Get Broadcast Status",
-          className: "api-method get",
-        },
-        {
-          type: "doc",
-          id: "api/broadcast-start",
-          label: "Start Broadcast",
-          className: "api-method post",
-        },
-        {
-          type: "doc",
-          id: "api/broadcast-stop",
-          label: "Stop Broadcast",
-          className: "api-method post",
-        },
-      ],
-    },
-    {
-      type: "category",
       label: "Room Clipboard",
       link: {
         type: "doc",

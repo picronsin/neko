@@ -21,7 +21,7 @@ func TestApplyVideoProfile(t *testing.T) {
 		t.Fatal(err)
 	}
 	main := config.VideoPipelines["main"]
-	if config.VideoProfile != "balanced" || config.VideoEncoder != quality.EncoderSoftware || len(config.VideoIDs) != 1 || main.Width != "1280" || main.Height != "720" {
+	if config.VideoProfile != "balanced" || config.VideoEncoder != quality.EncoderSoftware || len(config.VideoIDs) != 1 || main.Width != "width" || main.Height != "height" {
 		t.Fatalf("unexpected profile config: %+v", config)
 	}
 }
@@ -128,7 +128,7 @@ func TestApplyVideoProfileBuildsBrowserCodecFallbackVariants(t *testing.T) {
 		if !ok {
 			t.Fatalf("missing browser fallback variant %q: %+v", name, config.VideoVariants)
 		}
-		if variant.Codec.Name != name || variant.Pipelines["main"].Width != "1920" {
+		if variant.Codec.Name != name || variant.Pipelines["main"].Width != "width" {
 			t.Fatalf("unexpected %s variant: %+v", name, variant)
 		}
 	}

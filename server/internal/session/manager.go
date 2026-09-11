@@ -318,6 +318,13 @@ func (manager *SessionManagerCtx) storeAvatar(profile types.MemberProfile, id st
 	manager.avatarsMu.Lock()
 	defer manager.avatarsMu.Unlock()
 	manager.avatars[key] = profile.Avatar
+	// Some authentication providers issue a new session ID at every login.
+	// Keep a name-keyed copy for those providers so an uploaded avatar survives
+	// a server restart and the next login. ID-keyed values remain authoritative
+	// for providers with durable member IDs.
+	if name := strings.TrimSpace(profile.Name); name != "" {
+		manager.avatars[name] = profile.Avatar
+	}
 	avatars := make(map[string]string, len(manager.avatars))
 	for storedKey, avatar := range manager.avatars {
 		avatars[storedKey] = avatar

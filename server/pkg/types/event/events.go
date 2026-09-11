@@ -59,9 +59,8 @@ const (
 )
 
 const (
-	BROADCAST_STATUS = protocol.BroadcastStatus
-	SEND_UNICAST     = protocol.SendUnicast
-	SEND_BROADCAST   = protocol.SendBroadcast
+	SEND_UNICAST   = protocol.SendUnicast
+	SEND_BROADCAST = protocol.SendBroadcast
 )
 
 const (

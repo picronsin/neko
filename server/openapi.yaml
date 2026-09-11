@@ -53,9 +53,6 @@ tags:
   - name: room-settings
     description: Endpoints for managing room settings.
     x-displayName: Room Settings
-  - name: room-broadcast
-    description: Endpoints for managing room broadcasts.
-    x-displayName: Room Broadcast
   - name: room-clipboard
     description: Endpoints for managing the room clipboard.
     x-displayName: Room Clipboard
@@ -386,83 +383,6 @@ paths:
             schema:
               $ref: '#/components/schemas/Settings'
         required: true
-
-  /api/room/broadcast:
-    get:
-      tags:
-        - room-broadcast
-      summary: Get Broadcast Status
-      description: Retrieve the current broadcast status of the room.
-      operationId: broadcastStatus
-      responses:
-        '200':
-          description: Broadcast status retrieved successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BroadcastStatus'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-  /api/room/broadcast/start:
-    post:
-      tags:
-        - room-broadcast
-      summary: Start Broadcast
-      description: Start broadcasting the room's content.
-      operationId: broadcastStart
-      responses:
-        '204':
-          description: Broadcast started successfully.
-        '400':
-          description: Missing broadcast URL.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          description: Server is already broadcasting.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
-        '500':
-          description: Unable to start broadcast.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BroadcastStatus'
-        required: true
-  /api/room/broadcast/stop:
-    post:
-      tags:
-        - room-broadcast
-      summary: Stop Broadcast
-      description: Stop broadcasting the room's content.
-      operationId: broadcastStop
-      responses:
-        '204':
-          description: Broadcast stopped successfully.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          description: Server is not broadcasting.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
 
   /api/room/clipboard:
     get:
@@ -1399,17 +1319,6 @@ components:
           type: object
           additionalProperties: true
           description: Additional plugin settings.
-
-    BroadcastStatus:
-      type: object
-      properties:
-        url:
-          type: string
-          example: rtmp://localhost/live
-          description: The URL of the broadcast.
-        is_active:
-          type: boolean
-          description: Indicates if the broadcast is active.
 
     ClipboardText:
       type: object

@@ -13,10 +13,6 @@
         <span class="brand-caption">{{ $t('ui.remote_browser') }}</span>
       </span>
     </a>
-    <div class="live-pill" :aria-label="$t('ui.live')">
-      <span class="live-dot" aria-hidden="true" />
-      <span>{{ $t('ui.live') }}</span>
-    </div>
     <div
       data-testid="connection-indicator"
       class="connection-indicator"
@@ -105,8 +101,9 @@
     flex: 1;
     min-width: 0;
     padding: 0 18px;
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: clamp(0.35rem, 1vw, 0.9rem);
     align-items: center;
 
     .neko {
@@ -164,10 +161,12 @@
 
     .connection-indicator {
       min-width: 118px;
+      max-width: 15rem;
+      grid-column: 2;
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-right: 14px;
+      margin-right: 0;
       padding: 7px 10px;
       border: 1px solid rgba($text-normal, 0.08);
       border-radius: 10px;
@@ -261,37 +260,20 @@
       }
     }
 
-    .live-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-right: 10px;
-      padding: 6px 9px;
-      border: 1px solid rgba($style-primary, 0.22);
-      border-radius: 999px;
-      color: $style-primary;
-      background: rgba($style-primary, 0.1);
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-
-      .live-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: $style-primary;
-        box-shadow: 0 0 0 3px rgba($style-primary, 0.12);
-      }
-    }
-
     .menu {
-      justify-self: flex-end;
-      margin-right: 10px;
-      white-space: nowrap;
+      grid-column: 3;
+      justify-self: end;
+      min-width: max-content;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      list-style: none;
 
       li {
-        display: inline-block;
-        margin-left: 8px;
+        display: flex;
+        flex: 0 0 auto;
+        margin-left: 0;
         position: relative;
 
         .icon-button {
@@ -404,12 +386,17 @@
         }
       }
 
-      .live-pill {
-        display: none;
+      .menu li {
+        margin-left: 0;
+
+        .icon-button {
+          width: 32px;
+          height: 32px;
+        }
       }
 
-      .menu li {
-        margin-left: 2px;
+      .menu {
+        gap: 1px;
       }
     }
   }

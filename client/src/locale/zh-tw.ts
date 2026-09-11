@@ -96,7 +96,6 @@ export const setting = {
   ignore_emotes: '忽略表情符號',
   chat_sound: '播放聊天音效',
   keyboard_layout: '鍵盤配置',
-  broadcast_title: '直播',
 }
 
 export const connection = {

@@ -44,8 +44,12 @@ func Parse(value string) (Profile, error) {
 // selection that has already passed capability discovery.
 func (p Profile) VideoConfig(rtpCodec codec.RTPCodec, encoder Encoder, element string, showPointer bool) (types.VideoConfig, error) {
 	config := types.VideoConfig{
-		Width:       strconv.Itoa(p.Width),
-		Height:      strconv.Itoa(p.Height),
+		// The desktop resolution is selected at runtime. A quality profile
+		// controls encoding cadence and bitrate, while the output dimensions
+		// must follow the selected desktop size so browser clients actually see
+		// a resolution change after screen/set.
+		Width:       "width",
+		Height:      "height",
 		Fps:         strconv.Itoa(p.FPS),
 		Bitrate:     p.BitrateKbps,
 		ShowPointer: showPointer,

@@ -31,64 +31,6 @@
   {
     "key": [
       "capture",
-      "broadcast",
-      "audio_bitrate"
-    ],
-    "type": "int",
-    "defaultValue": "128",
-    "description": "broadcast audio bitrate in KB/s"
-  },
-  {
-    "key": [
-      "capture",
-      "broadcast",
-      "autostart"
-    ],
-    "type": "boolean",
-    "defaultValue": "true",
-    "description": "automatically start broadcasting when neko starts and broadcast_url is set"
-  },
-  {
-    "key": [
-      "capture",
-      "broadcast",
-      "pipeline"
-    ],
-    "type": "string",
-    "description": "gstreamer pipeline used for broadcasting"
-  },
-  {
-    "key": [
-      "capture",
-      "broadcast",
-      "preset"
-    ],
-    "type": "string",
-    "defaultValue": "veryfast",
-    "description": "broadcast speed preset for h264 encoding"
-  },
-  {
-    "key": [
-      "capture",
-      "broadcast",
-      "url"
-    ],
-    "type": "string",
-    "description": "initial URL for broadcasting, setting this value will automatically start broadcasting"
-  },
-  {
-    "key": [
-      "capture",
-      "broadcast",
-      "video_bitrate"
-    ],
-    "type": "int",
-    "defaultValue": "4096",
-    "description": "broadcast video bitrate in KB/s"
-  },
-  {
-    "key": [
-      "capture",
       "microphone",
       "device"
     ],

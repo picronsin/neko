@@ -138,6 +138,12 @@ func (Session) Init(cmd *cobra.Command) error {
 func (s *Session) Set() {
 	s.File = viper.GetString("session.file")
 	s.AvatarFile = viper.GetString("session.avatar_file")
+	// Viper may return an empty value for a bound flag when no configuration
+	// source explicitly sets it. Keep avatar uploads persistent by default,
+	// matching the CLI flag declared in Init.
+	if s.AvatarFile == "" {
+		s.AvatarFile = "/home/neko/.local/share/neko/avatars.json"
+	}
 
 	s.PrivateMode = viper.GetBool("session.private_mode")
 	s.LockedLogins = viper.GetBool("session.locked_logins")

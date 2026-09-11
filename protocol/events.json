@@ -31,7 +31,6 @@
   {"name":"CLIPBOARD_SET","value":"clipboard/set"},
   {"name":"KEYBOARD_MODIFIERS","value":"keyboard/modifiers"},
   {"name":"KEYBOARD_MAP","value":"keyboard/map"},
-  {"name":"BROADCAST_STATUS","value":"broadcast/status"},
   {"name":"SEND_UNICAST","value":"send/unicast"},
   {"name":"SEND_BROADCAST","value":"send/broadcast"},
   {"name":"FILE_CHOOSER_DIALOG_OPENED","value":"file_chooser_dialog/opened"},

@@ -5,6 +5,7 @@ export type MediaInputData = Record<string, number | boolean | undefined>
 export interface MediaSessionOptions {
   onData?: (event: MessageEvent) => void
   onError?: (error: Error | Event) => void
+  onDataChannelOpen?: () => void
   onTrack?: (event: RTCTrackEvent) => void
   onDataChannelClosed?: () => void
 }
@@ -43,6 +44,10 @@ export class MediaSession {
 
     this.channel = channel
     channel.binaryType = 'arraybuffer'
+    channel.onopen = () => this.options.onDataChannelOpen?.()
+    if (channel.readyState === 'open') {
+      queueMicrotask(() => this.options.onDataChannelOpen?.())
+    }
     channel.onerror = (event) => this.options.onError?.(event)
     channel.onmessage = (event) => this.options.onData?.(event)
     channel.onclose = () => {
@@ -116,6 +121,7 @@ export class MediaSession {
 
     channel.onmessage = null
     channel.onerror = null
+    channel.onopen = null
     channel.onclose = null
     try {
       channel.close()

@@ -11,7 +11,6 @@ import (
 var (
 	ErrIsNotAllowedToHost = errors.New("is not allowed to host")
 	ErrIsNotTheHost       = errors.New("is not the host")
-	ErrIsAlreadyTheHost   = errors.New("is already the host")
 	ErrIsAlreadyHosted    = errors.New("is already hosted")
 )
 
@@ -30,9 +29,6 @@ func (h *MessageHandlerCtx) controlRequest(session types.Session) error {
 	result, err := h.control.Request(session)
 	if errors.Is(err, control.ErrNotAllowed) {
 		return ErrIsNotAllowedToHost
-	}
-	if errors.Is(err, control.ErrAlreadyHost) {
-		return ErrIsAlreadyTheHost
 	}
 	if err != nil || result.Queued {
 		if err != nil {

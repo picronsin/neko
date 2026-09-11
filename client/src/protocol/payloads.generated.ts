@@ -2,11 +2,6 @@
 
 import type { ProtocolErrorCode } from './events.generated'
 
-export interface BroadcastStatusPayload {
-  is_active: boolean
-  url?: string
-}
-
 export interface ChatContentPayload {
   text: string
 }
@@ -265,7 +260,6 @@ export interface StreamSelectorPayload {
 }
 
 export interface SystemAdminPayload {
-  broadcast_status: BroadcastStatusPayload
 }
 
 export interface SystemDisconnectPayload {

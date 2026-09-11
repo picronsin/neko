@@ -22,16 +22,20 @@ export const state = () => ({
 
 export const getters = getterTree(state, {
   controlling: (state, getters, root) => {
-    return root.user.id === state.id
+    // An empty session ID must never count as ownership. During websocket
+    // initialization both IDs are empty, which otherwise makes the UI claim
+    // that the user already controls the desktop.
+    return state.id !== '' && root.user.id === state.id
   },
+  // `hosting` is the actual ownership state. Implicit hosting only means a
+  // click may request control automatically; it does not grant ownership in
+  // the client before the server broadcasts control/host.
   hosting: (state, getters, root) => {
-    return root.user.id === state.id || state.implicitHosting
+    return state.id !== '' && root.user.id === state.id
   },
-  hosted: (state) => {
-    return state.id !== '' || state.implicitHosting
-  },
+  hosted: (state) => state.id !== '',
   host: (state, getters, root) => {
-    return root.user.members[state.id] || (state.implicitHosting && root.user.id) || null
+    return state.id !== '' ? root.user.members[state.id] || null : null
   },
 })
 
@@ -92,32 +96,47 @@ export const actions = actionTree(
       $client.sendMessage(EVENT.CLIPBOARD.SET, { text: clipboard })
     },
 
-    toggle({ getters }) {
+    async toggle({ getters }) {
       if (!accessor.connection.connected) {
         return
       }
 
-      if (!getters.hosting) {
-        $client.sendMessage(EVENT.CONTROL.REQUEST)
-      } else {
-        $client.sendMessage(EVENT.CONTROL.RELEASE)
+      try {
+        if (!getters.hosting) {
+          await $client.room.requestControl()
+        } else {
+          await $client.room.releaseControl()
+        }
+        await $client.syncControlState()
+      } catch (error) {
+        $client.emit('warn', 'failed to change control state', error)
       }
     },
 
-    request({ getters }) {
+    async request({ getters }) {
       if (!accessor.connection.connected || getters.controlling) {
         return
       }
 
-      $client.sendMessage(EVENT.CONTROL.REQUEST)
+      try {
+        await $client.room.requestControl()
+        await $client.syncControlState()
+      } catch (error) {
+        $client.emit('warn', 'failed to request control', error)
+      }
     },
 
-    release({ getters }) {
+    async release({ getters }) {
       if (!accessor.connection.connected || !getters.hosting) {
         return
       }
 
-      $client.sendMessage(EVENT.CONTROL.RELEASE)
+      try {
+        await $client.room.releaseControl()
+        await $client.syncControlState()
+      } catch (error) {
+        $client.emit('warn', 'failed to release control', error)
+      }
     },
 
     async give({ getters }, member: string | Member) {

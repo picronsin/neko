@@ -6,7 +6,6 @@ export const somebody = 'Somebody'
 export const send_a_message = 'Send a message'
 
 export const ui = {
-  live: 'LIVE',
   about: 'About n.eko',
   secure: 'Secure',
   github_repository: 'GitHub repository',
@@ -132,8 +131,6 @@ export const setting = {
   chat_sound: 'Play Chat Sound',
   links_in_app: 'Always open links in app',
   keyboard_layout: 'Keyboard Layout',
-  broadcast_title: 'Live Broadcast',
-  broadcast_placeholder: 'rtmp://a.rtmp.youtube.com/live2/<stream-key>',
   group_playback: 'Playback',
   group_chat: 'Chat and appearance',
   group_input: 'Input',

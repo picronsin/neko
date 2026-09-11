@@ -40,8 +40,6 @@
     },
     "SystemAdmin": {
       "type": "object",
-      "required": ["broadcast_status"],
-      "properties": { "broadcast_status": { "$ref": "#/$defs/BroadcastStatus" } },
       "additionalProperties": false
     },
     "SystemSettingsUpdate": {
@@ -343,12 +341,6 @@
       },
       "additionalProperties": false
     },
-    "BroadcastStatus": {
-      "type": "object",
-      "required": ["is_active"],
-      "properties": { "is_active": { "type": "boolean" }, "url": { "type": "string" } },
-      "additionalProperties": false
-    },
     "SendUnicast": {
       "type": "object",
       "required": ["sender", "receiver", "subject", "body"],
@@ -461,7 +453,6 @@
     { "if": { "properties": { "event": { "enum": ["clipboard/updated", "clipboard/set"] } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/ClipboardData" } } } },
     { "if": { "properties": { "event": { "const": "keyboard/map" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/KeyboardMap" } } } },
     { "if": { "properties": { "event": { "const": "keyboard/modifiers" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/KeyboardModifiers" } } } },
-    { "if": { "properties": { "event": { "const": "broadcast/status" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/BroadcastStatus" } } } },
     { "if": { "properties": { "event": { "const": "send/unicast" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SendUnicast" } } } },
     { "if": { "properties": { "event": { "const": "send/broadcast" } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SendBroadcast" } } } },
     { "if": { "properties": { "event": { "enum": ["file_chooser_dialog/opened", "file_chooser_dialog/closed"] } } }, "then": { "required": ["payload"], "properties": { "payload": { "$ref": "#/$defs/SessionID" } } } },

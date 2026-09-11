@@ -96,7 +96,6 @@ export const setting = {
   ignore_emotes: '이모지 무시',
   chat_sound: '채팅 소리 재생',
   keyboard_layout: '키보드 레이아웃',
-  broadcast_title: '실시간 방송',
 }
 
 export const connection = {

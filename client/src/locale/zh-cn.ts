@@ -6,7 +6,6 @@ export const somebody = '某人'
 export const send_a_message = '发送消息'
 
 export const ui = {
-  live: '直播中',
   about: '关于 n.eko',
   secure: '安全连接',
   github_repository: 'GitHub 仓库',
@@ -129,8 +128,6 @@ export const setting = {
   chat_sound: '播放聊天提示音',
   links_in_app: '始终在应用中打开链接',
   keyboard_layout: '键盘布局',
-  broadcast_title: '直播流',
-  broadcast_placeholder: 'rtmp://a.rtmp.youtube.com/live2/<串流密钥>',
   group_playback: '播放',
   group_chat: '聊天与外观',
   group_input: '输入',

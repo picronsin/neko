@@ -4,7 +4,6 @@ api.ts
 api/current-session-api.ts
 api/general-api.ts
 api/members-api.ts
-api/room-broadcast-api.ts
 api/room-clipboard-api.ts
 api/room-control-api.ts
 api/room-keyboard-api.ts
@@ -17,7 +16,6 @@ common.ts
 configuration.ts
 docs/BatchRequest.md
 docs/BatchResponse.md
-docs/BroadcastStatus.md
 docs/ClipboardText.md
 docs/ControlStatus.md
 docs/CurrentSessionApi.md
@@ -33,7 +31,6 @@ docs/MemberPassword.md
 docs/MemberProfile.md
 docs/MembersApi.md
 docs/ProfileAvatarRequest.md
-docs/RoomBroadcastApi.md
 docs/RoomClipboardApi.md
 docs/RoomControlApi.md
 docs/RoomKeyboardApi.md
@@ -51,7 +48,6 @@ docs/Stats.md
 index.ts
 model/batch-request.ts
 model/batch-response.ts
-model/broadcast-status.ts
 model/clipboard-text.ts
 model/control-status.ts
 model/error-message.ts

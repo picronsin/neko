@@ -2,11 +2,6 @@
 package protocol
 
 // Protocol payload contracts generated from protocol/payloads.schema.json.
-type BroadcastStatusPayload struct {
-	IsActive bool    `json:"is_active"`
-	Url      *string `json:"url,omitempty"`
-}
-
 type ChatContentPayload struct {
 	Text string `json:"text"`
 }
@@ -265,7 +260,6 @@ type StreamSelectorPayload struct {
 }
 
 type SystemAdminPayload struct {
-	BroadcastStatus BroadcastStatusPayload `json:"broadcast_status"`
 }
 
 type SystemDisconnectPayload struct {
