@@ -445,7 +445,7 @@
         } catch (err: any) {
           this.$swal({
             title: this.$t('controls.mic_error') as string,
-            text: err.message,
+            text: err?.name === 'NotFoundError' ? (this.$t('controls.mic_device_not_found') as string) : err.message,
             icon: 'error',
           })
         }

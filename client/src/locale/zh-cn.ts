@@ -83,6 +83,10 @@ export const controls = {
   unlock: '解锁控制',
   has: '你拥有控制权',
   hasnot: '你没有控制权',
+  mic_on: '开启麦克风',
+  mic_off: '关闭麦克风',
+  mic_error: '麦克风错误',
+  mic_device_not_found: '未找到麦克风。请连接或启用麦克风，并在浏览器设置中选择该设备后重试。',
 }
 
 export const locks = {
@@ -161,7 +165,8 @@ export const notifications = {
   controls_given: '将控制权交给了 {name}',
   controls_has: '{name} 拥有控制权',
   controls_has_alt: '但我已通知对方你想要控制权',
-  controls_requesting: '{name} 正在请求控制权',
+  controls_requesting: '{name} 想要控制权',
+  controls_request_sent: '你正在向 {name} 请求控制权',
   resolution: '分辨率已更改为 {width}x{height}@{rate}',
   banned: '{name} 已被封禁',
   kicked: '{name} 已被踢出',

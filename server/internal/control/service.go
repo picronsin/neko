@@ -65,6 +65,14 @@ func (s *Service) Request(session types.Session) (RequestResult, error) {
 		return RequestResult{}, ErrNotAllowed
 	}
 
+	// Administrators take control immediately from regular users. A request is
+	// only meaningful when the current holder is also an administrator, so that
+	// admins retain the opportunity to coordinate without a forced takeover.
+	if host, hasHost := s.sessions.GetHost(); hasHost && session.Profile().IsAdmin && !host.Profile().IsAdmin {
+		session.SetAsHost()
+		return RequestResult{Granted: true}, nil
+	}
+
 	if s.sessions.Settings().ImplicitHosting {
 		session.SetAsHost()
 		return RequestResult{Granted: true}, nil

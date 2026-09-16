@@ -86,6 +86,8 @@ export const controls = {
   mic_on: 'Enable Microphone',
   mic_off: 'Disable Microphone',
   mic_error: 'Microphone Error',
+  mic_device_not_found:
+    'No microphone was found. Connect or enable a microphone, then select it in your browser settings.',
 }
 
 export const locks = {
@@ -165,6 +167,7 @@ export const notifications = {
   controls_has: '{name} has the controls',
   controls_has_alt: 'But I let the person know you wanted it',
   controls_requesting: '{name} is requesting the controls',
+  controls_request_sent: 'You are requesting the controls from {name}',
   resolution: 'changed the resolution to {width}x{height}@{rate}',
   banned: 'banned {name}',
   kicked: 'kicked {name}',

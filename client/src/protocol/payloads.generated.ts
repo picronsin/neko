@@ -259,8 +259,7 @@ export interface StreamSelectorPayload {
   type: string
 }
 
-export interface SystemAdminPayload {
-}
+export interface SystemAdminPayload {}
 
 export interface SystemDisconnectPayload {
   message: string

@@ -189,8 +189,11 @@ export abstract class BaseClient extends EventEmitter<BaseEvents> {
   }
 
   public sendMessage(event: WebSocketEvents, payload?: WebSocketPayloads) {
-    if (!this.connected) {
-      this.emit('warn', `attempting to send message while disconnected`)
+    // WebSocket events (chat, emotes, and room state) do not depend on the
+    // WebRTC data channel. Requiring a fully connected media peer here drops
+    // those events while media is negotiating or recovering.
+    if (!this.socketOpen) {
+      this.emit('warn', `attempting to send message while signaling socket is closed`)
       return
     }
     this.emit('debug', `sending event '${event}' ${payload ? `with payload: ` : ''}`, payload)

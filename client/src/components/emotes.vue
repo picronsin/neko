@@ -226,6 +226,5 @@
         clearInterval(this.interval)
       }
     }
-
   }
 </script>

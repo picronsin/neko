@@ -71,6 +71,17 @@ export class NekoClient extends BaseClient implements EventEmitter<NekoEvents> {
     this.state.remote.setHost(control.has_host ? control.host_id || '' : '')
   }
 
+  /** Confirm to a requester that the current controller received their request. */
+  notifyControlRequestSent(hostName: string) {
+    this.ui.notify({
+      group: 'neko',
+      type: 'info',
+      title: this.ui.translate('notifications.controls_request_sent', { name: hostName }),
+      duration: 5000,
+      speed: 1000,
+    })
+  }
+
   private get state() {
     return this.runtime.state
   }
@@ -388,8 +399,7 @@ export class NekoClient extends BaseClient implements EventEmitter<NekoEvents> {
     this.ui.notify({
       group: 'neko',
       type: 'info',
-      title: this.ui.translate('notifications.controls_has', { name: member.displayname }),
-      text: this.ui.translate('notifications.controls_has_alt'),
+      title: this.ui.translate('notifications.controls_requesting', { name: member.displayname }),
       duration: 5000,
       speed: 1000,
     })

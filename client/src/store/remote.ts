@@ -103,11 +103,16 @@ export const actions = actionTree(
 
       try {
         if (!getters.hosting) {
+          const host = getters.host
           await $client.room.requestControl()
+          await $client.syncControlState()
+          if (host && !accessor.remote.controlling) {
+            $client.notifyControlRequestSent(host.displayname)
+          }
         } else {
           await $client.room.releaseControl()
+          await $client.syncControlState()
         }
-        await $client.syncControlState()
       } catch (error) {
         $client.emit('warn', 'failed to change control state', error)
       }
@@ -119,8 +124,12 @@ export const actions = actionTree(
       }
 
       try {
+        const host = getters.host
         await $client.room.requestControl()
         await $client.syncControlState()
+        if (host && !accessor.remote.controlling) {
+          $client.notifyControlRequestSent(host.displayname)
+        }
       } catch (error) {
         $client.emit('warn', 'failed to request control', error)
       }

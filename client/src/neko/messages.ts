@@ -67,8 +67,7 @@ export interface SettingsPayload {
   plugins?: Record<string, unknown>
 }
 
-export interface SystemAdminPayload {
-}
+export interface SystemAdminPayload {}
 
 export interface SystemSettingsPayload extends SettingsPayload {
   id: string
