@@ -1,4 +1,4 @@
-import { getterTree, mutationTree, actionTree } from 'typed-vuex'
+import { getterTree, mutationTree, actionTree } from './helpers'
 import { Member } from '~/neko/types'
 
 import md from 'simple-markdown'
@@ -79,7 +79,7 @@ export const actions = actionTree(
       }
 
       if (typeof member === 'string') {
-        member = state.members[member]
+        member = state.members[member] as Member
       }
 
       if (!member) {
@@ -97,7 +97,7 @@ export const actions = actionTree(
       }
 
       if (typeof member === 'string') {
-        member = state.members[member]
+        member = state.members[member] as Member
       }
 
       if (!member) {
@@ -113,7 +113,7 @@ export const actions = actionTree(
       }
 
       if (typeof member === 'string') {
-        member = state.members[member]
+        member = state.members[member] as Member
       }
 
       if (!member) {
@@ -129,7 +129,7 @@ export const actions = actionTree(
       }
 
       if (typeof member === 'string') {
-        member = state.members[member]
+        member = state.members[member] as Member
       }
 
       if (!member) {

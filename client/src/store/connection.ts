@@ -1,4 +1,5 @@
-import { getterTree, mutationTree, actionTree } from 'typed-vuex'
+import { getterTree, mutationTree, actionTree } from './helpers'
+import { NetworkPath, NetworkProtocol } from '~/sdk/network-monitor'
 
 export const namespaced = true
 
@@ -17,6 +18,8 @@ export const state = () => ({
   error: '',
   quality: 'unknown' as NetworkQuality,
   rtt: null as number | null,
+  path: 'unknown' as NetworkPath,
+  protocol: 'unknown' as NetworkProtocol,
 })
 
 export const getters = getterTree(state, {
@@ -33,6 +36,8 @@ export const mutations = mutationTree(state, {
     state.error = ''
     state.quality = 'unknown'
     state.rtt = null
+    state.path = 'unknown'
+    state.protocol = 'unknown'
   },
 
   setConnected(state, connected: boolean) {
@@ -42,6 +47,8 @@ export const mutations = mutationTree(state, {
     if (!connected) {
       state.quality = 'unknown'
       state.rtt = null
+      state.path = 'unknown'
+      state.protocol = 'unknown'
     }
   },
 
@@ -55,6 +62,8 @@ export const mutations = mutationTree(state, {
     if (connectionState === 'disconnected') {
       state.quality = 'unknown'
       state.rtt = null
+      state.path = 'unknown'
+      state.protocol = 'unknown'
     }
   },
 
@@ -72,6 +81,11 @@ export const mutations = mutationTree(state, {
   setNetworkQuality(state, { quality, rtt }: { quality: NetworkQuality; rtt: number | null }) {
     state.quality = quality
     state.rtt = rtt
+  },
+
+  setNetworkPath(state, { path, protocol }: { path: NetworkPath; protocol: NetworkProtocol }) {
+    state.path = path
+    state.protocol = protocol
   },
 })
 

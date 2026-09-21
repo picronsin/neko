@@ -21,6 +21,10 @@ func TestMediaPortPlanValidate(t *testing.T) {
 			plan: MediaPortPlan{Mode: ModeFRP, UDPMuxPort: 40000, TCPMuxPort: 40000, NAT1To1IP: "198.51.100.20"},
 		},
 		{
+			name: "auto ICE without static port mapping",
+			plan: MediaPortPlan{Mode: ModeAuto},
+		},
+		{
 			name:    "missing mode",
 			plan:    MediaPortPlan{UDPMuxPort: 59000},
 			wantErr: true,
@@ -53,6 +57,11 @@ func TestMediaPortPlanValidate(t *testing.T) {
 		{
 			name:    "FRP missing public IP",
 			plan:    MediaPortPlan{Mode: ModeFRP, UDPMuxPort: 40000, TCPMuxPort: 40000},
+			wantErr: true,
+		},
+		{
+			name:    "auto with static public IP",
+			plan:    MediaPortPlan{Mode: ModeAuto, NAT1To1IP: "198.51.100.20"},
 			wantErr: true,
 		},
 	}

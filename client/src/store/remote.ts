@@ -1,4 +1,4 @@
-import { getterTree, mutationTree, actionTree } from 'typed-vuex'
+import { getterTree, mutationTree, actionTree } from './helpers'
 import { Member } from '~/neko/types'
 import { EVENT } from '~/neko/events'
 import { accessor } from '~/store'
@@ -104,7 +104,13 @@ export const actions = actionTree(
       try {
         if (!getters.hosting) {
           const host = getters.host
-          await $client.room.requestControl()
+          // Administrators can take control immediately from a regular user.
+          // A request is still used when the current holder is another admin.
+          if (accessor.user.admin && (!host || !host.admin)) {
+            await $client.room.takeControl()
+          } else {
+            await $client.room.requestControl()
+          }
           await $client.syncControlState()
           if (host && !accessor.remote.controlling) {
             $client.notifyControlRequestSent(host.displayname)
@@ -154,46 +160,66 @@ export const actions = actionTree(
       }
 
       if (typeof member === 'string') {
-        member = accessor.user.members[member]
+        member = accessor.user.members[member] as Member
       }
 
       if (!member) {
         return
       }
 
-      await $client.room.giveControl(member.id)
+      try {
+        await $client.room.giveControl(member.id)
+        await $client.syncControlState()
+      } catch (error) {
+        $client.emit('warn', 'failed to give control', error)
+      }
     },
 
-    adminControl() {
+    async adminControl() {
       if (!accessor.connection.connected || !accessor.user.admin) {
         return
       }
 
-      $client.room.takeControl()
+      try {
+        await $client.room.takeControl()
+        await $client.syncControlState()
+      } catch (error) {
+        $client.emit('warn', 'failed to take control as administrator', error)
+      }
     },
 
-    adminRelease() {
+    async adminRelease() {
       if (!accessor.connection.connected || !accessor.user.admin) {
         return
       }
 
-      $client.room.resetControl()
+      try {
+        await $client.room.resetControl()
+        await $client.syncControlState()
+      } catch (error) {
+        $client.emit('warn', 'failed to release control as administrator', error)
+      }
     },
 
-    adminGive(store, member: string | Member) {
+    async adminGive(store, member: string | Member) {
       if (!accessor.connection.connected) {
         return
       }
 
       if (typeof member === 'string') {
-        member = accessor.user.members[member]
+        member = accessor.user.members[member] as Member
       }
 
       if (!member) {
         return
       }
 
-      $client.room.giveControl(member.id)
+      try {
+        await $client.room.giveControl(member.id)
+        await $client.syncControlState()
+      } catch (error) {
+        $client.emit('warn', 'failed to give control', error)
+      }
     },
 
     changeKeyboard({ getters }) {

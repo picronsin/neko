@@ -149,6 +149,9 @@ export const connection = {
   network_good: '网络质量良好',
   network_fair: '网络质量一般',
   network_poor: '网络质量较差',
+  path_direct: '直连',
+  path_relay: 'TURN 中继',
+  path_unknown: '正在检测连接路径',
   kicked: '你已被踢出',
   button_confirm: '确定',
 }

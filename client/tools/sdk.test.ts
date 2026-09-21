@@ -7,10 +7,71 @@ import { MediaSession } from '../src/sdk/media-session'
 import { createGeneratedRestHttpClient } from '../src/sdk/openapi'
 import { RoomClient } from '../src/sdk/room'
 import { encodeMediaInput, MEDIA_OPCODE } from '../src/sdk/media-protocol'
-import { classifyNetworkQuality } from '../src/sdk/network-monitor'
+import { classifyNetworkQuality, selectedCandidatePath, NetworkQualityMonitor, NetworkQualitySample } from '../src/sdk/network-monitor'
+import { filterEmoji } from '../src/utils/emoji-search'
 import { validateSignalingMessage } from '../src/sdk/signaling'
 import { validateProtocolPayload } from '../src/protocol/validate'
 import { mapPointerToScreen, normalizeScreenConfigurations } from '../src/neko/screen'
+
+async function testNetworkMonitorLifecycle() {
+  const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window')
+  const timers = new Map<number, () => void>()
+  let timerID = 0
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: {
+      setInterval(callback: () => void) {
+        timers.set(++timerID, callback)
+        return timerID
+      },
+      clearInterval(id: number) { timers.delete(id) },
+    },
+  })
+  const pending: Array<(stats: RTCStatsReport) => void> = []
+  const peer = {
+    getStats: () => new Promise<RTCStatsReport>((resolve) => pending.push(resolve)),
+  }
+  const samples: NetworkQualitySample[] = []
+  const monitor = new NetworkQualityMonitor({ onSample: (sample) => samples.push(sample) })
+  const report = (packetsReceived: number) => new Map([
+    ['video', { type: 'inbound-rtp', kind: 'video', packetsReceived, packetsLost: 0 }],
+  ]) as unknown as RTCStatsReport
+  try {
+    monitor.start(peer)
+    timers.forEach((tick) => tick())
+    assert.equal(pending.length, 1, 'slow getStats calls must not overlap')
+    monitor.stop()
+    assert.equal(timers.size, 0)
+    pending[0](report(100))
+    await Promise.resolve()
+    assert.equal(samples.length, 0, 'stopped monitors must not publish pending results')
+
+    monitor.start(peer)
+    monitor.start(peer)
+    assert.equal(timers.size, 1)
+    pending[1](report(200))
+    await Promise.resolve()
+    timers.forEach((tick) => tick())
+    assert.equal(pending.length, 3, 'old requests must not unlock the current sample')
+    assert.equal(samples.length, 0, 'restarting the same peer must discard old results')
+    pending[2](report(10))
+    await Promise.resolve()
+    assert.equal(samples.length, 1)
+    assert.equal(samples[0].packetsReceived, 10)
+    timers.forEach((tick) => tick())
+    assert.equal(pending.length, 4, 'sampling must resume after completion')
+    pending[3](report(20))
+    await Promise.resolve()
+    assert.equal(samples.length, 2)
+  } finally {
+    monitor.stop()
+    if (originalWindow) {
+      Object.defineProperty(globalThis, 'window', originalWindow)
+    } else {
+      Reflect.deleteProperty(globalThis, 'window')
+    }
+  }
+}
 
 async function testAuthClient() {
   const requests: Array<{ url: string; data: unknown }> = []
@@ -116,6 +177,11 @@ async function testGeneratedRestClientAgainstServer() {
 }
 
 const normalized = normalizeApiError({ response: { status: 409, data: { message: 'control busy', error_code: 'CONTROL_CONFLICT' } } })
+assert.deepEqual(filterEmoji(['cat', 'smile'], { smile: ['happy'] }, 'cat'), ['cat'])
+assert.deepEqual(filterEmoji(['cat', 'smile'], { smile: ['happy'] }, 'smile'), ['smile'])
+assert.deepEqual(filterEmoji(['cat', 'smile'], { smile: ['happy'] }, ' HAPPY '), ['smile'])
+assert.deepEqual(filterEmoji(['cat', 'smile'], {}, 'missing'), [])
+assert.deepEqual(filterEmoji(['cat', 'smile'], {}, ''), ['cat', 'smile'])
 assert.equal(normalized instanceof ApiError, true)
 assert.equal(normalized.status, 409)
 assert.equal(normalized.errorCode, 'CONTROL_CONFLICT')
@@ -126,6 +192,36 @@ assert.equal(classifyNetworkQuality(80, 0.01, true), 'good')
 assert.equal(classifyNetworkQuality(200, 0.01, true), 'fair')
 assert.equal(classifyNetworkQuality(400, 0, true), 'poor')
 assert.equal(classifyNetworkQuality(80, 0.1, true), 'poor')
+assert.deepEqual(
+  selectedCandidatePath([
+    { id: 'transport', type: 'transport', selectedCandidatePairId: 'pair' },
+    {
+      id: 'pair',
+      type: 'candidate-pair',
+      localCandidateId: 'local',
+      remoteCandidateId: 'remote',
+      protocol: 'udp',
+    },
+    { id: 'local', type: 'local-candidate', candidateType: 'srflx' },
+    { id: 'remote', type: 'remote-candidate', candidateType: 'srflx' },
+  ]),
+  { path: 'direct', protocol: 'udp', rtt: null },
+)
+assert.deepEqual(
+  selectedCandidatePath([
+    {
+      id: 'pair',
+      type: 'candidate-pair',
+      state: 'succeeded',
+      nominated: true,
+      localCandidateId: 'local',
+      remoteCandidateId: 'remote',
+    },
+    { id: 'local', type: 'local-candidate', candidateType: 'relay', protocol: 'tcp' },
+    { id: 'remote', type: 'remote-candidate', candidateType: 'srflx' },
+  ]),
+  { path: 'relay', protocol: 'tcp', rtt: null },
+)
 
 assert.deepEqual(
   validateSignalingMessage({
@@ -285,6 +381,7 @@ assert.throws(() => encodeMediaInput({ event: 'keydown', key: 1, epoch: -1 }), /
 assert.throws(() => encodeMediaInput({ event: 'keydown', key: 1, epoch: Number.MAX_SAFE_INTEGER + 1 }), /epoch/)
 
 void testAuthClient()
+  .then(testNetworkMonitorLifecycle)
   .then(testRoomClient)
   .then(testGeneratedRestClient)
   .then(testGeneratedRestClientAgainstServer)

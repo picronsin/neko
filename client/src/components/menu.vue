@@ -110,42 +110,46 @@
 </style>
 
 <script lang="ts">
-  import { Component, Vue, Watch } from 'vue-property-decorator'
+  import { defineComponent } from 'vue'
   import { messages } from '~/locale'
   import { set } from '~/utils/localstorage'
 
-  @Component({ name: 'neko-menu' })
-  export default class extends Vue {
-    get admin() {
-      return this.$accessor.user.admin
-    }
+  export default defineComponent({
+    name: 'neko-menu',
+    computed: {
+      admin() {
+        return this.$accessor.user.admin
+      },
 
-    get langs() {
-      return Object.keys(messages)
-    }
+      langs() {
+        return Object.keys(messages)
+      },
+    },
 
-    about() {
-      this.$accessor.client.toggleAbout()
-    }
+    methods: {
+      about() {
+        this.$accessor.client.toggleAbout()
+      },
 
-    @Watch('$i18n.locale')
-    onLanguageChange(newLang: string) {
-      set('lang', newLang)
-    }
-
-    mounted() {
-      const default_lang = new URL(location.href).searchParams.get('lang')
-      if (default_lang && this.langs.includes(default_lang)) {
-        this.$i18n.locale = default_lang
-      }
-      const show_side = new URL(location.href).searchParams.get('show_side')
-      if (show_side !== null) {
-        this.$accessor.client.setSide(show_side === '1')
-      }
-      const mute_chat = new URL(location.href).searchParams.get('mute_chat')
-      if (mute_chat !== null) {
-        this.$accessor.settings.setSound(mute_chat !== '1')
-      }
-    }
-  }
+      mounted() {
+        const default_lang = new URL(location.href).searchParams.get('lang')
+        if (default_lang && this.langs.includes(default_lang)) {
+          this.$i18n.locale = default_lang
+        }
+        const show_side = new URL(location.href).searchParams.get('show_side')
+        if (show_side !== null) {
+          this.$accessor.client.setSide(show_side === '1')
+        }
+        const mute_chat = new URL(location.href).searchParams.get('mute_chat')
+        if (mute_chat !== null) {
+          this.$accessor.settings.setSound(mute_chat !== '1')
+        }
+      },
+    },
+    watch: {
+      '$i18n.locale'(newLang: string) {
+        set('lang', newLang)
+      },
+    },
+  })
 </script>

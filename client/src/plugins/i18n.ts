@@ -1,9 +1,6 @@
-import Vue from 'vue'
-import VueI18n from 'vue-i18n'
+import { createI18n } from 'vue-i18n'
 import { messages } from '~/locale'
 import { get } from '~/utils/localstorage'
-
-Vue.use(VueI18n)
 
 const fallbackLocale = 'en'
 
@@ -24,7 +21,9 @@ function detectBrowserLanguage(): string {
   return fallbackLocale
 }
 
-export const i18n = new VueI18n({
+export const i18n = createI18n({
+  legacy: true,
+  globalInjection: true,
   locale: get<string>('lang', detectBrowserLanguage()),
   fallbackLocale,
   messages,

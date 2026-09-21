@@ -124,107 +124,107 @@
 </style>
 
 <script lang="ts">
-  import { Vue, Component } from 'vue-property-decorator'
+  import { defineComponent } from 'vue'
   import { get, set } from '../utils/localstorage'
 
-  @Component({
+  export default defineComponent({
     name: 'neko-emotes',
-  })
-  export default class extends Vue {
-    recent: string[] = JSON.parse(get('emote_recent', '[]'))
-    pickerOpen = false
-
-    get emotes() {
-      return [
-        'anger',
-        'bomb',
-        'sleep',
-        'explode',
-        'sweat',
-        'poo',
-        'hundred',
-        'alert',
-        'punch',
-        'wave',
-        'okay',
-        'thumbs-up',
-        'clap',
-        'prey',
-        'celebrate',
-        'flame',
-        'goof',
-        'love',
-        'cool',
-        'smerk',
-        'worry',
-        'ouch',
-        'cry',
-        'surprised',
-        'quiet',
-        'rage',
-        'annoy',
-        'steamed',
-        'scared',
-        'terrified',
-        'sleepy',
-        'dead',
-        'happy',
-        'roll-eyes',
-        'thinking',
-        'clown',
-        'sick',
-        'rofl',
-        'drule',
-        'sniff',
-        'sus',
-        'party',
-        'odd',
-        'hot',
-        'cold',
-        'blush',
-        'sad',
-      ].filter((v) => !this.recent.includes(v))
-    }
-
-    get muted() {
-      return this.$accessor.user.muted
-    }
-
-    sendEmote(emote: string) {
-      if (!this.recent.includes(emote)) {
-        if (this.recent.length > 4) {
-          this.recent.shift()
+    data: () => ({
+      recent: JSON.parse(get('emote_recent', '[]')) as string[],
+      pickerOpen: false,
+      interval: undefined as number | undefined,
+    }),
+    computed: {
+      emotes() {
+        return [
+          'anger',
+          'bomb',
+          'sleep',
+          'explode',
+          'sweat',
+          'poo',
+          'hundred',
+          'alert',
+          'punch',
+          'wave',
+          'okay',
+          'thumbs-up',
+          'clap',
+          'prey',
+          'celebrate',
+          'flame',
+          'goof',
+          'love',
+          'cool',
+          'smerk',
+          'worry',
+          'ouch',
+          'cry',
+          'surprised',
+          'quiet',
+          'rage',
+          'annoy',
+          'steamed',
+          'scared',
+          'terrified',
+          'sleepy',
+          'dead',
+          'happy',
+          'roll-eyes',
+          'thinking',
+          'clown',
+          'sick',
+          'rofl',
+          'drule',
+          'sniff',
+          'sus',
+          'party',
+          'odd',
+          'hot',
+          'cold',
+          'blush',
+          'sad',
+        ]
+      },
+      muted() {
+        return this.$accessor.user.muted
+      },
+    },
+    methods: {
+      sendEmote(emote: string) {
+        if (!this.recent.includes(emote)) {
+          if (this.recent.length > 4) {
+            this.recent.shift()
+          }
+          this.recent.push(emote)
+          set('emote_recent', JSON.stringify(this.recent))
         }
-        this.recent.push(emote)
-        set('emote_recent', JSON.stringify(this.recent))
-      }
-      this.$accessor.chat.sendEmote(emote)
-    }
-
-    selectEmote(emote: string) {
-      this.sendEmote(emote)
-      this.pickerOpen = false
-    }
-
-    togglePicker() {
-      this.pickerOpen = !this.pickerOpen
-    }
-
-    private interval!: number
-
-    startSendingEmotes(emote: string) {
-      this.$accessor.chat.sendEmote(emote)
-      this.stopSendingEmotes()
-
-      this.interval = window.setInterval(() => {
         this.$accessor.chat.sendEmote(emote)
-      }, 350)
-    }
+      },
+      selectEmote(emote: string) {
+        this.sendEmote(emote)
+        this.pickerOpen = false
+      },
+      togglePicker() {
+        this.pickerOpen = !this.pickerOpen
+      },
+      startSendingEmotes(emote: string) {
+        this.$accessor.chat.sendEmote(emote)
+        this.stopSendingEmotes()
 
-    stopSendingEmotes() {
-      if (this.interval) {
-        clearInterval(this.interval)
-      }
-    }
-  }
+        this.interval = window.setInterval(() => {
+          this.$accessor.chat.sendEmote(emote)
+        }, 350)
+      },
+      stopSendingEmotes() {
+        if (this.interval) {
+          clearInterval(this.interval)
+          this.interval = undefined
+        }
+      },
+    },
+    beforeUnmount() {
+      this.stopSendingEmotes()
+    },
+  })
 </script>

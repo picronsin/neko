@@ -1,4 +1,4 @@
-import { getterTree, mutationTree, actionTree } from 'typed-vuex'
+import { getterTree, mutationTree, actionTree } from './helpers'
 import { get, set } from '~/utils/localstorage'
 import { accessor } from '~/store'
 

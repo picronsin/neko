@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import { actionTree, getterTree, mutationTree } from 'typed-vuex'
+import { actionTree, getterTree, mutationTree } from './helpers'
 import { AdminLockResource } from '~/neko/messages'
 import { accessor } from '~/store'
 import { get, set } from '~/utils/localstorage'
@@ -19,11 +18,11 @@ export const mutations = mutationTree(state, {
   },
 
   setLocked(state, resource: string) {
-    Vue.set(state.locked, resource, true)
+    state.locked[resource] = true
   },
 
   setUnlocked(state, resource: string) {
-    Vue.set(state.locked, resource, false)
+    state.locked[resource] = false
   },
 })
 

@@ -109,7 +109,7 @@ func (WebRTC) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("webrtc.connectivity.mode", "", "optional connectivity mode (direct or frp)")
+	cmd.PersistentFlags().String("webrtc.connectivity.mode", "", "optional connectivity mode (direct, frp, or auto)")
 	if err := viper.BindPFlag("webrtc.connectivity.mode", cmd.PersistentFlags().Lookup("webrtc.connectivity.mode")); err != nil {
 		return err
 	}
@@ -241,8 +241,15 @@ func (s *WebRTC) Set() {
 			Msgf("no TCP, UDP mux or epr specified, using default epr range")
 	}
 
+	s.Connectivity = connectivity.Mode(viper.GetString("webrtc.connectivity.mode"))
 	s.NAT1To1IPs = viper.GetStringSlice("webrtc.nat1to1")
 	s.IpRetrievalUrl = viper.GetString("webrtc.ip_retrieval_url")
+	if s.Connectivity == connectivity.ModeAuto {
+		// A server behind NAT must gather its mapped address from STUN. The
+		// HTTP endpoint only reports the NAT gateway/CGNAT address and would
+		// incorrectly advertise it as a static 1:1 host candidate.
+		s.IpRetrievalUrl = ""
+	}
 	if s.IpRetrievalUrl != "" && len(s.NAT1To1IPs) == 0 {
 		ip, err := utils.HttpRequestGET(s.IpRetrievalUrl)
 		if err == nil {
@@ -252,7 +259,6 @@ func (s *WebRTC) Set() {
 		}
 	}
 
-	s.Connectivity = connectivity.Mode(viper.GetString("webrtc.connectivity.mode"))
 	if err := s.validateConnectivity(epr); err != nil {
 		log.Panic().Err(err).Msg("invalid WebRTC connectivity configuration")
 	}
@@ -316,6 +322,19 @@ func (s WebRTC) validateConnectivity(epr string) error {
 			plan.NAT1To1IP = s.NAT1To1IPs[0]
 		}
 		return plan.Validate()
+	}
+
+	if s.Connectivity == connectivity.ModeAuto {
+		if s.ICELite {
+			return fmt.Errorf("auto connectivity mode requires webrtc.icelite=false")
+		}
+		if len(s.NAT1To1IPs) != 0 {
+			return fmt.Errorf("auto connectivity mode must not set webrtc.nat1to1")
+		}
+		if len(s.ICEServersFrontend) == 0 || len(s.ICEServersBackend) == 0 {
+			return fmt.Errorf("auto connectivity mode requires frontend and backend ICE servers")
+		}
+		return connectivity.MediaPortPlan{Mode: s.Connectivity}.Validate()
 	}
 
 	return fmt.Errorf("unsupported connectivity mode %q", s.Connectivity)

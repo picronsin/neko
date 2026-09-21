@@ -1,4 +1,6 @@
 export type NetworkQuality = 'unknown' | 'good' | 'fair' | 'poor'
+export type NetworkPath = 'unknown' | 'direct' | 'relay'
+export type NetworkProtocol = 'unknown' | 'udp' | 'tcp'
 
 export interface NetworkQualitySample {
   quality: NetworkQuality
@@ -6,6 +8,8 @@ export interface NetworkQualitySample {
   packetLoss: number
   packetsReceived: number
   packetsLost: number
+  path: NetworkPath
+  protocol: NetworkProtocol
 }
 
 export interface NetworkStatsPeer {
@@ -28,6 +32,8 @@ export class NetworkQualityMonitor {
   private peer?: NetworkStatsPeer
   private timer?: number
   private previous?: { packetsReceived: number; packetsLost: number }
+  private generation = 0
+  private sampling = false
 
   constructor(options: NetworkQualityMonitorOptions) {
     this.intervalMs = options.intervalMs ?? 5000
@@ -43,6 +49,8 @@ export class NetworkQualityMonitor {
   }
 
   stop() {
+    this.generation++
+    this.sampling = false
     if (this.timer !== undefined) {
       window.clearInterval(this.timer)
       this.timer = undefined
@@ -52,12 +60,17 @@ export class NetworkQualityMonitor {
   }
 
   private async sample() {
-    if (!this.peer) {
+    if (!this.peer || this.sampling) {
       return
     }
 
+    const generation = this.generation
+    this.sampling = true
     try {
       const stats = await this.peer.getStats()
+      if (generation !== this.generation) {
+        return
+      }
       let packetsReceived = 0
       let packetsLost = 0
       let rtt: number | null = null
@@ -77,6 +90,11 @@ export class NetworkQualityMonitor {
         }
       })
 
+      const selectedPath = selectedCandidatePath(Array.from(stats.values()))
+      if (selectedPath.rtt !== null) {
+        rtt = selectedPath.rtt
+      }
+
       const previous = this.previous
       this.previous = { packetsReceived, packetsLost }
       const receivedDelta = previous ? Math.max(0, packetsReceived - previous.packetsReceived) : packetsReceived
@@ -91,10 +109,59 @@ export class NetworkQualityMonitor {
         packetLoss,
         packetsReceived,
         packetsLost,
+        path: selectedPath.path,
+        protocol: selectedPath.protocol,
       })
     } catch {
       // getStats is best effort; a temporary failure must not affect the media session.
+    } finally {
+      if (generation === this.generation) {
+        this.sampling = false
+      }
     }
+  }
+}
+
+/**
+ * Reads the browser-selected ICE candidate pair without exposing candidate
+ * addresses. A relay candidate means media traverses TURN; every other
+ * selected pair is a browser-to-server direct path.
+ */
+export function selectedCandidatePath(stats: Iterable<any>): {
+  path: NetworkPath
+  protocol: NetworkProtocol
+  rtt: number | null
+} {
+  const values = Array.from(stats)
+  const byID = new Map(values.filter((value) => typeof value?.id === 'string').map((value) => [value.id, value]))
+  const transport = values.find((value) => value?.type === 'transport' && value.selectedCandidatePairId)
+  const succeededPairs = values
+    .filter((value) => value?.type === 'candidate-pair' && value.state === 'succeeded')
+    .sort(
+      (left, right) =>
+        Number(right.bytesSent || 0) +
+        Number(right.bytesReceived || 0) -
+        Number(left.bytesSent || 0) -
+        Number(left.bytesReceived || 0),
+    )
+  const pair =
+    byID.get(transport?.selectedCandidatePairId) ||
+    succeededPairs.find((value) => value.selected === true || value.nominated === true) ||
+    // Some Chromium versions expose neither selected nor nominated. The
+    // successful pair carrying the most traffic is the active media path.
+    succeededPairs[0]
+
+  if (!pair) {
+    return { path: 'unknown', protocol: 'unknown', rtt: null }
+  }
+
+  const local = byID.get(pair.localCandidateId)
+  const remote = byID.get(pair.remoteCandidateId)
+  const protocol = String(pair.protocol || local?.protocol || remote?.protocol || '').toLowerCase()
+  return {
+    path: local?.candidateType === 'relay' || remote?.candidateType === 'relay' ? 'relay' : 'direct',
+    protocol: protocol === 'udp' || protocol === 'tcp' ? protocol : 'unknown',
+    rtt: typeof pair.currentRoundTripTime === 'number' ? Math.round(pair.currentRoundTripTime * 1000) : null,
   }
 }
 

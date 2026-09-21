@@ -197,43 +197,42 @@
 </style>
 
 <script lang="ts">
-  import { Component, Ref, Vue } from 'vue-property-decorator'
+  import { defineComponent } from 'vue'
 
   import Content from './context.vue'
   import Avatar from './avatar.vue'
 
-  @Component({
+  export default defineComponent({
     name: 'neko-members',
     components: {
       'neko-context': Content,
       'neko-avatar': Avatar,
     },
+    computed: {
+      id() {
+        return this.$accessor.user.id
+      },
+
+      host() {
+        return this.$accessor.remote.id
+      },
+
+      member() {
+        return this.$accessor.user.member
+      },
+
+      members() {
+        return this.$accessor.user.members
+      },
+    },
+    methods: {
+      bubble(id: string) {
+        return this.$accessor.chat.bubbles[id]
+      },
+
+      onContext(event: MouseEvent, data: any) {
+        ;(this.$refs.context as any)?.open(event, data)
+      },
+    },
   })
-  export default class extends Vue {
-    @Ref('context') readonly _context!: any
-
-    get id() {
-      return this.$accessor.user.id
-    }
-
-    get host() {
-      return this.$accessor.remote.id
-    }
-
-    get member() {
-      return this.$accessor.user.member
-    }
-
-    get members() {
-      return this.$accessor.user.members
-    }
-
-    bubble(id: string) {
-      return this.$accessor.chat.bubbles[id]
-    }
-
-    onContext(event: MouseEvent, data: any) {
-      this._context.open(event, data)
-    }
-  }
 </script>

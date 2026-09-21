@@ -1,4 +1,4 @@
-import { actionTree, getterTree, mutationTree } from 'typed-vuex'
+import { actionTree, getterTree, mutationTree } from './helpers'
 import { FileListItem, FileTransfer } from '~/neko/types'
 import { EVENT } from '~/neko/events'
 import { accessor } from '~/store'

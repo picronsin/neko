@@ -218,7 +218,10 @@ export class NekoClient extends BaseClient implements EventEmitter<NekoEvents> {
   private startNetworkMonitor() {
     this.stopNetworkMonitor()
     this.networkMonitor = new NetworkQualityMonitor({
-      onSample: ({ quality, rtt }) => this.state.connection.setNetworkQuality({ quality, rtt }),
+      onSample: ({ quality, rtt, path, protocol }) => {
+        this.state.connection.setNetworkQuality({ quality, rtt })
+        this.state.connection.setNetworkPath({ path, protocol })
+      },
     })
     if (this._peer) {
       this.networkMonitor.start(this._peer)
@@ -291,6 +294,10 @@ export class NekoClient extends BaseClient implements EventEmitter<NekoEvents> {
 
   protected [EVENT.SYSTEM.ADMIN]() {}
 
+  // Server heartbeats are liveness markers. The client heartbeat interval is
+  // configured during system/init, so no state change is required here.
+  protected [EVENT.SYSTEM.HEARTBEAT]() {}
+
   protected [EVENT.SYSTEM.SETTINGS](settings: SystemSettingsPayload) {
     this.state.remote.setImplicitHosting(settings.implicit_hosting)
     this.state.remote.setLocked(settings.locked_controls)
@@ -298,6 +305,12 @@ export class NekoClient extends BaseClient implements EventEmitter<NekoEvents> {
     this.setLockState('control', settings.locked_controls)
     this.setLockState('file_transfer', settings.plugins?.['filetransfer.enabled'] === false)
   }
+
+  // These server-side media state notifications are informational. The media
+  // tracks themselves are handled by the WebRTC ontrack callback.
+  protected [EVENT.SIGNAL.VIDEO]() {}
+
+  protected [EVENT.SIGNAL.AUDIO]() {}
 
   private setLockState(resource: 'login' | 'control' | 'file_transfer', locked: boolean) {
     if (locked) {

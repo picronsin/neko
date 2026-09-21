@@ -20,6 +20,7 @@
         @click.stop.prevent="toggleControl"
       >
         <i class="fas fa-keyboard" aria-hidden="true" />
+        <span class="control-label">{{ $t(hosting ? 'controls.release' : 'controls.request') }}</span>
       </button>
     </li>
     <li class="no-pointer" v-if="implicitHosting">
@@ -46,7 +47,12 @@
           delay: { show: 300, hide: 100 },
         }"
       >
-        <input type="checkbox" v-model="locked" :disabled="!hosting || (implicitHosting && controlLocked)" />
+        <input
+          type="checkbox"
+          v-model="locked"
+          :aria-label="$t(locked ? 'controls.unlock' : 'controls.lock')"
+          :disabled="!hosting || (implicitHosting && controlLocked)"
+        />
         <span />
       </label>
     </li>
@@ -332,11 +338,11 @@
 </style>
 
 <script lang="ts">
-  import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
+  import { Vue, Component, Prop, Watch } from 'vue-facing-decorator'
 
   @Component({ name: 'neko-controls' })
   export default class extends Vue {
-    @Prop(Boolean) readonly shakeKbd!: boolean
+    @Prop({ type: Boolean, default: false } as any) readonly shakeKbd!: boolean
 
     get controlLocked() {
       return (

@@ -1,0 +1,27 @@
+# No-public-IP deployment: WebRTC first attempts UDP NAT traversal using STUN
+# and falls back to the public TURN service. The TURN server must be deployed
+# on a separate host with a public IP; do not expose static TURN credentials.
+services:
+  neko:
+    image: neko-m1-demo:local
+    container_name: neko-m1-auto
+    restart: unless-stopped
+    shm_size: 2gb
+    volumes:
+      - "neko-m1-auto-data:/home/neko/.local/share/neko"
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      NEKO_DESKTOP_SCREEN: ${NEKO_DEMO_SCREEN:-1280x720@30}
+      NEKO_CAPTURE_VIDEO_PROFILE: ${NEKO_DEMO_VIDEO_PROFILE:-balanced}
+      NEKO_MEMBER_MULTIUSER_USER_PASSWORD: ${NEKO_DEMO_USER_PASSWORD:?set NEKO_DEMO_USER_PASSWORD}
+      NEKO_MEMBER_MULTIUSER_ADMIN_PASSWORD: ${NEKO_DEMO_ADMIN_PASSWORD:?set NEKO_DEMO_ADMIN_PASSWORD}
+      NEKO_WEBRTC_CONNECTIVITY_MODE: auto
+      NEKO_WEBRTC_ICELITE: "false"
+      NEKO_WEBRTC_ICESERVERS_FRONTEND: >-
+        [{"urls":["stun:${STUN_PUBLIC_HOST:?set STUN_PUBLIC_HOST}:3478"]},{"urls":["turn:${TURN_PUBLIC_HOST:?set TURN_PUBLIC_HOST}:3478?transport=udp","turn:${TURN_PUBLIC_HOST}:3478?transport=tcp"],"username":"${TURN_USERNAME:?set TURN_USERNAME}","credential":"${TURN_PASSWORD:?set TURN_PASSWORD}"}]
+      NEKO_WEBRTC_ICESERVERS_BACKEND: >-
+        [{"urls":["stun:${STUN_PUBLIC_HOST}:3478"]},{"urls":["turn:${TURN_PUBLIC_HOST}:3478?transport=udp","turn:${TURN_PUBLIC_HOST}:3478?transport=tcp"],"username":"${TURN_USERNAME}","credential":"${TURN_PASSWORD}"}]
+
+volumes:
+  neko-m1-auto-data:

@@ -16,6 +16,9 @@ const (
 	ModeDirect Mode = "direct"
 	// ModeFRP exposes the worker through a TCP and UDP tunnel on one public port.
 	ModeFRP Mode = "frp"
+	// ModeAuto gathers server-reflexive candidates through STUN and falls back
+	// to TURN instead of advertising a static public 1:1 mapping.
+	ModeAuto Mode = "auto"
 )
 
 // MediaPortPlan is the public MUX contract for a room worker. The same port
@@ -35,7 +38,7 @@ func (p MediaPortPlan) Validate() error {
 	if p.Mode == "" {
 		return fmt.Errorf("connectivity mode is required")
 	}
-	if p.Mode != ModeDirect && p.Mode != ModeFRP {
+	if p.Mode != ModeDirect && p.Mode != ModeFRP && p.Mode != ModeAuto {
 		return fmt.Errorf("unsupported connectivity mode %q", p.Mode)
 	}
 	if err := validatePort("udp mux", p.UDPMuxPort); err != nil {
@@ -44,7 +47,7 @@ func (p MediaPortPlan) Validate() error {
 	if err := validatePort("tcp mux", p.TCPMuxPort); err != nil {
 		return err
 	}
-	if p.UDPMuxPort == 0 && p.TCPMuxPort == 0 {
+	if p.Mode != ModeAuto && p.UDPMuxPort == 0 && p.TCPMuxPort == 0 {
 		return fmt.Errorf("at least one media mux port is required")
 	}
 
@@ -64,6 +67,9 @@ func (p MediaPortPlan) Validate() error {
 		if p.NAT1To1IP == "" {
 			return fmt.Errorf("frp mode requires the tunnel public NAT 1:1 IP")
 		}
+	}
+	if p.Mode == ModeAuto && p.NAT1To1IP != "" {
+		return fmt.Errorf("auto connectivity mode must not advertise a nat 1:1 IP")
 	}
 
 	return nil

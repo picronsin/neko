@@ -1,5 +1,5 @@
 import { accessor as neko } from './store'
-import { PluginObject } from 'vue'
+import type { App, Plugin } from 'vue'
 
 // Plugins
 import Logger from './plugins/log'
@@ -27,9 +27,6 @@ import Context from '~/components/context.vue'
 import Markdown from '~/components/markdown'
 import Avatar from '~/components/avatar.vue'
 
-// Vue
-import Vue from 'vue'
-import ToolTip from 'v-tooltip'
 
 // Stable SDK primitives are exported separately from the Vue components so
 // embedders can own signaling, lifecycle, or input serialization themselves.
@@ -64,29 +61,21 @@ export type {
   NetworkQualityMonitorOptions,
 } from './sdk/network-monitor'
 
-Vue.use(ToolTip)
-
-const exportMixin = {
-  computed: {
-    $accessor() {
-      return neko
-    },
-    $client() {
-      return window.$client
-    },
-  },
-}
-
-const plugini18n: PluginObject<undefined> = {
-  install(Vue) {
-    Vue.prototype.i18n = i18n
-    Vue.prototype.$t = i18n.t.bind(i18n)
-    Vue.prototype.$te = i18n.te.bind(i18n)
+/** Vue 3 plugin for embedding neko components in another application. */
+export const NekoPlugin: Plugin = {
+  install(app: App) {
+    app.use(i18n)
+    app.use(Logger)
+    app.use(Axios)
+    app.use(Swal)
+    app.use(Anime)
+    app.use(Client)
+    app.config.globalProperties.$accessor = neko
   },
 }
 
 function extend(component: any) {
-  return component.use(plugini18n).use(Logger).use(Axios).use(Swal).use(Anime).use(Client).extend(exportMixin)
+  return component
 }
 
 export const NekoConnect = extend(Connect)

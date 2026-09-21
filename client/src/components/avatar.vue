@@ -42,42 +42,38 @@
 </style>
 
 <script lang="ts">
-  import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
+  import { defineComponent } from 'vue'
 
-  @Component({
+  export default defineComponent({
     name: 'neko-avatar',
+    props: {
+      seed: { type: String, default: '' },
+      avatar: { type: String, default: '' },
+      size: { type: Number, default: 40 },
+    },
+    data: () => ({ imageFailed: false }),
+    computed: {
+      initials() {
+        return this.seed.substring(0, 2).toUpperCase()
+      },
+    },
+    watch: {
+      avatar() {
+        this.imageFailed = false
+      },
+    },
+    methods: {
+      Background(seed: string) {
+        let a = 0
+        let b = 0
+        let c = 0
+        for (let i = 0; i < seed.length; i++) {
+          a += seed.charCodeAt(i) * 3
+          b += seed.charCodeAt(i) * 5
+          c += seed.charCodeAt(i) * 7
+        }
+        return `rgb(${Math.floor(128 + (a % 128))},${Math.floor(128 + (b % 128))},${Math.floor(128 + (c % 128))})`
+      },
+    },
   })
-  export default class extends Vue {
-    @Prop({ type: String, default: '' }) readonly seed!: string
-    @Prop({ type: String, default: '' }) readonly avatar!: string
-    @Prop({ type: Number, default: 40 }) readonly size!: number
-
-    imageFailed = false
-
-    get initials() {
-      return this.seed.substring(0, 2).toUpperCase()
-    }
-
-    @Watch('avatar')
-    onAvatarChanged() {
-      this.imageFailed = false
-    }
-
-    Background(seed: string) {
-      let a = 0,
-        b = 0,
-        c = 0
-
-      for (let i = 0; i < seed.length; i++) {
-        a += seed.charCodeAt(i) * 3
-        b += seed.charCodeAt(i) * 5
-        c += seed.charCodeAt(i) * 7
-      }
-
-      let x = Math.floor(128 + (a % 128))
-      let y = Math.floor(128 + (b % 128))
-      let z = Math.floor(128 + (c % 128))
-      return 'rgb(' + x + ',' + y + ',' + z + ')'
-    }
-  }
 </script>

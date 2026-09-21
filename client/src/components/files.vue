@@ -430,7 +430,7 @@
 </style>
 
 <script lang="ts">
-  import { Component, Vue } from 'vue-property-decorator'
+  import { Component, Vue } from 'vue-facing-decorator'
 
   import Markdown from './markdown'
   import Content from './context.vue'

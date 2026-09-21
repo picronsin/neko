@@ -31,31 +31,28 @@
 </style>
 
 <script lang="ts">
-  import { Component, Ref, Vue, Prop } from 'vue-property-decorator'
+  import { defineComponent, PropType } from 'vue'
 
-  @Component({ name: 'neko-emote' })
-  export default class extends Vue {
-    @Prop({
-      required: true,
-    })
-    id!: string
-
-    @Ref('emote') container!: HTMLElement
-
-    get emote() {
-      return this.$accessor.chat.emotes[this.id]
-    }
-
-    private classes: string[] = []
-
+  export default defineComponent({
+    name: 'neko-emote',
+    props: {
+      id: { type: String as PropType<string>, required: true },
+    },
+    data: () => ({ classes: [] as string[] }),
+    computed: {
+      emote() {
+        return this.$accessor.chat.emotes[this.id]
+      },
+    },
     mounted() {
+      const container = this.$refs.emote as HTMLElement
       const range = 50
       let count = 0
       let finish: Array<Promise<any>> = []
 
       this.classes = ['emote', this.emote.type]
 
-      for (let child of this.container.children) {
+      for (let child of container.children) {
         const ele = child as HTMLElement
         ele.style['left'] = `${count % 2 ? this.$anime.random(0, range) : this.$anime.random(-range, 0)}%`
         ele.style['opacity'] = `0`
@@ -82,6 +79,6 @@
         this.$emit('done', this.id)
         this.$accessor.chat.delEmote(this.id)
       })
-    }
-  }
+    },
+  })
 </script>

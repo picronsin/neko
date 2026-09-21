@@ -45,6 +45,13 @@ For TURN fallback, copy `demo/compose.turn.example.yaml` to
 credentials. Open TCP/UDP `3478` plus the complete relay range in the TURN
 server firewall. Do not commit the copied files containing credentials.
 
+For a server without a public IP, copy `demo/compose.auto.example.yaml` to
+`compose.auto.yaml`. Set public STUN and TURN endpoints plus short-lived TURN
+credentials, then start it with `docker compose -f demo/compose.auto.yaml up
+-d --build`. `auto` gathers NAT-reflexive candidates through STUN and prefers
+direct UDP; TURN keeps the session available when the NAT cannot be traversed.
+Do not set `NEKO_WEBRTC_NAT1TO1` in this mode.
+
 To run the local FRP and Coturn connectivity checks (including same-port
 TCP/UDP forwarding, authenticated allocation, and relay-range validation):
 

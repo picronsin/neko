@@ -71,7 +71,8 @@ docker compose -f demo/compose.local.yaml up -d --build
 docker compose -f demo/compose.local.yaml down
 ```
 
-更多 FRP、Coturn 和连通性检查说明见 [demo/README.md](../../../demo/README.md)。
+更多 FRP、Coturn 和连通性检查说明见
+[demo/README.md](https://github.com/m1k1o/neko/blob/master/demo/README.md)。
 
 ## 生成完整镜像
 

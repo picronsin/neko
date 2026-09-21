@@ -1,6 +1,6 @@
 <template>
   <div class="clipboard" v-if="opened" @click="$event.stopPropagation()">
-    <textarea ref="textarea" v-model="clipboard" @focus="$event.target.select()" />
+    <textarea ref="textarea" v-model="clipboard" @focus="selectText" />
   </div>
 </template>
 
@@ -36,41 +36,40 @@
 </style>
 
 <script lang="ts">
-  import { Component, Ref, Vue } from 'vue-property-decorator'
+  import { defineComponent } from 'vue'
 
-  @Component({
+  export default defineComponent({
     name: 'neko-clipboard',
+    data: () => ({ opened: false, typing: undefined as number | undefined }),
+    computed: {
+      clipboard: {
+        get() {
+          return this.$accessor.remote.clipboard
+        },
+        set(data: string) {
+          this.$accessor.remote.setClipboard(data)
+          if (this.typing) clearTimeout(this.typing)
+          this.typing = window.setTimeout(() => this.$accessor.remote.sendClipboard(this.clipboard), 500)
+        },
+      },
+    },
+    methods: {
+      open() {
+        this.opened = true
+        document.body.addEventListener('click', this.close)
+        window.setTimeout(() => (this.$refs.textarea as HTMLTextAreaElement).focus(), 0)
+      },
+      selectText(event: FocusEvent) {
+        ;(event.target as HTMLTextAreaElement | null)?.select()
+      },
+      close() {
+        this.opened = false
+        document.body.removeEventListener('click', this.close)
+      },
+    },
+    beforeUnmount() {
+      this.close()
+      if (this.typing) clearTimeout(this.typing)
+    },
   })
-  export default class extends Vue {
-    @Ref('textarea') readonly _textarea!: HTMLTextAreaElement
-
-    private opened: boolean = false
-    private typing?: number
-
-    get clipboard() {
-      return this.$accessor.remote.clipboard
-    }
-
-    set clipboard(data: string) {
-      this.$accessor.remote.setClipboard(data)
-
-      if (this.typing) {
-        clearTimeout(this.typing)
-        this.typing = undefined
-      }
-
-      this.typing = window.setTimeout(() => this.$accessor.remote.sendClipboard(this.clipboard), 500)
-    }
-
-    open() {
-      this.opened = true
-      document.body.addEventListener('click', this.close)
-      window.setTimeout(() => this._textarea.focus(), 0)
-    }
-
-    close() {
-      this.opened = false
-      document.body.removeEventListener('click', this.close)
-    }
-  }
 </script>

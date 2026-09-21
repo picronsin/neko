@@ -358,27 +358,36 @@
 </style>
 
 <script lang="ts">
-  import { Component, Vue, Watch } from 'vue-property-decorator'
+  import { defineComponent } from 'vue'
 
-  @Component({ name: 'neko-connect' })
-  export default class extends Vue {
-    private autoPassword: string | null = new URL(location.href).searchParams.get('pwd')
-
-    private displayname: string = ''
-    private password: string = ''
-    private loginError: string = ''
-    private showPassword: boolean = false
-
-    get connectionError() {
-      return this.$accessor.connection.error
-    }
-
-    @Watch('connectionError', { immediate: true })
-    onConnectionError(message: string) {
-      if (message) {
-        this.loginError = message
-      }
-    }
+  export default defineComponent({
+    name: 'neko-connect',
+    data: () => ({
+      autoPassword: new URL(location.href).searchParams.get('pwd') as string | null,
+      displayname: '',
+      password: '',
+      loginError: '',
+      showPassword: false,
+    }),
+    computed: {
+      connectionError() {
+        return this.$accessor.connection.error
+      },
+      connecting() {
+        return this.$accessor.connection.connecting
+      },
+      connectionState() {
+        return this.$accessor.connection.state
+      },
+    },
+    watch: {
+      connectionError: {
+        immediate: true,
+        handler(message: string) {
+          if (message) this.loginError = message
+        },
+      },
+    },
 
     mounted() {
       // auto-password fill
@@ -400,55 +409,49 @@
         this.$accessor.session.login({ displayname, password })
         this.autoPassword = null
       }
-    }
+    },
 
-    get connecting() {
-      return this.$accessor.connection.connecting
-    }
+    methods: {
+      removeUrlParam(param: string) {
+        let url = document.location.href
+        let urlparts = url.split('?')
 
-    get connectionState() {
-      return this.$accessor.connection.state
-    }
+        if (urlparts.length >= 2) {
+          let urlBase = urlparts.shift()
+          let queryString = urlparts.join('?')
 
-    removeUrlParam(param: string) {
-      let url = document.location.href
-      let urlparts = url.split('?')
-
-      if (urlparts.length >= 2) {
-        let urlBase = urlparts.shift()
-        let queryString = urlparts.join('?')
-
-        let prefix = encodeURIComponent(param) + '='
-        let pars = queryString.split(/[&;]/g)
-        for (let i = pars.length; i-- > 0; ) {
-          if (pars[i].lastIndexOf(prefix, 0) !== -1) {
-            pars.splice(i, 1)
+          let prefix = encodeURIComponent(param) + '='
+          let pars = queryString.split(/[&;]/g)
+          for (let i = pars.length; i-- > 0; ) {
+            if (pars[i].lastIndexOf(prefix, 0) !== -1) {
+              pars.splice(i, 1)
+            }
           }
+
+          url = urlBase + (pars.length > 0 ? '?' + pars.join('&') : '')
+          window.history.pushState('', document.title, url)
+        }
+      },
+
+      login() {
+        let password = this.password
+        if (this.autoPassword !== null) {
+          password = this.autoPassword
         }
 
-        url = urlBase + (pars.length > 0 ? '?' + pars.join('&') : '')
-        window.history.pushState('', document.title, url)
-      }
-    }
+        if (this.displayname == '') {
+          this.loginError = this.$t('connect.empty_displayname') as string
+          return
+        }
 
-    login() {
-      let password = this.password
-      if (this.autoPassword !== null) {
-        password = this.autoPassword
-      }
+        this.loginError = ''
+        this.$accessor.session.login({ displayname: this.displayname, password })
+        this.autoPassword = null
+      },
 
-      if (this.displayname == '') {
-        this.loginError = this.$t('connect.empty_displayname') as string
-        return
-      }
-
-      this.loginError = ''
-      this.$accessor.session.login({ displayname: this.displayname, password })
-      this.autoPassword = null
-    }
-
-    about() {
-      this.$accessor.client.toggleAbout()
-    }
-  }
+      about() {
+        this.$accessor.client.toggleAbout()
+      },
+    },
+  })
 </script>

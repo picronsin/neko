@@ -16,7 +16,7 @@
     <div
       data-testid="connection-indicator"
       class="connection-indicator"
-      :class="[connectionState, networkQuality]"
+      :class="[connectionState, networkQuality, networkPath]"
       role="status"
       :title="connectionTitle"
     >
@@ -24,6 +24,7 @@
       <span class="connection-copy">
         <span class="connection-label">{{ connectionLabel }}</span>
         <span v-if="networkRtt !== null" class="connection-rtt">{{ networkRtt }} ms</span>
+        <span v-if="connected" class="connection-path">{{ networkPathLabel }}</span>
       </span>
       <span
         v-if="connected && networkQuality !== 'unknown'"
@@ -34,65 +35,86 @@
         <i v-for="bar in 3" :key="bar" />
       </span>
     </div>
-    <ul class="menu" role="toolbar" :aria-label="$t('ui.room_controls')">
-      <li>
-        <button
-          type="button"
-          :class="[{ disabled: !admin }, { locked: isLocked('control') }, 'icon-button']"
-          @click="toggleLock('control')"
-          :aria-label="lockedTooltip('control')"
-          v-tooltip="{
-            content: lockedTooltip('control'),
-            placement: 'bottom',
-            offset: 5,
-            boundariesElement: 'body',
-            delay: { show: 300, hide: 100 },
-          }"
-        >
-          <i class="fas fa-mouse" aria-hidden="true" />
-        </button>
-      </li>
-      <li>
-        <button
-          type="button"
-          :class="[{ disabled: !admin }, { locked: isLocked('login') }, 'icon-button']"
-          @click="toggleLock('login')"
-          :aria-label="lockedTooltip('login')"
-          v-tooltip="{
-            content: lockedTooltip('login'),
-            placement: 'bottom',
-            offset: 5,
-            boundariesElement: 'body',
-            delay: { show: 300, hide: 100 },
-          }"
-        >
-          <i :class="[locked ? 'fa-lock' : 'fa-lock-open', 'fas']" aria-hidden="true" />
-        </button>
-      </li>
-      <li v-if="fileTransfer">
-        <button
-          type="button"
-          :class="[{ disabled: !admin }, { locked: isLocked('file_transfer') }, 'icon-button']"
-          @click="toggleLock('file_transfer')"
-          :aria-label="lockedTooltip('file_transfer')"
-          v-tooltip="{
-            content: lockedTooltip('file_transfer'),
-            placement: 'bottom',
-            offset: 5,
-            boundariesElement: 'body',
-            delay: { show: 300, hide: 100 },
-          }"
-        >
-          <i class="fas fa-file" aria-hidden="true" />
-        </button>
-      </li>
-      <li>
-        <span v-if="showBadge" class="badge">&bull;</span>
-        <button type="button" class="icon-button toggle" :aria-label="$t('ui.toggle_room_panel')" @click="toggleMenu">
-          <i class="fas fa-bars" aria-hidden="true" />
-        </button>
-      </li>
-    </ul>
+    <div class="header-actions">
+      <details class="room-options" @keydown.esc="closeAdminMenu">
+        <summary :aria-label="$t('ui.room_controls')" :title="$t('ui.room_controls')">
+          <i class="fas fa-sliders" aria-hidden="true" />
+        </summary>
+        <ul class="room-options-list">
+          <li>
+            <button
+              type="button"
+              :class="[{ disabled: !admin }, { locked: isLocked('control') }, 'icon-button']"
+              @click="toggleLock('control')"
+              :disabled="!admin"
+              :aria-label="lockedTooltip('control')"
+              v-tooltip="{
+                content: lockedTooltip('control'),
+                placement: 'bottom',
+                offset: 5,
+                boundariesElement: 'body',
+                delay: { show: 300, hide: 100 },
+              }"
+            >
+              <i class="fas fa-mouse" aria-hidden="true" /><span>{{ lockedTooltip('control') }}</span>
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              :class="[{ disabled: !admin }, { locked: isLocked('login') }, 'icon-button']"
+              @click="toggleLock('login')"
+              :disabled="!admin"
+              :aria-label="lockedTooltip('login')"
+              v-tooltip="{
+                content: lockedTooltip('login'),
+                placement: 'bottom',
+                offset: 5,
+                boundariesElement: 'body',
+                delay: { show: 300, hide: 100 },
+              }"
+            >
+              <i :class="[locked ? 'fa-lock' : 'fa-lock-open', 'fas']" aria-hidden="true" /><span>{{
+                lockedTooltip('login')
+              }}</span>
+            </button>
+          </li>
+          <li v-if="fileTransfer">
+            <button
+              type="button"
+              :class="[{ disabled: !admin }, { locked: isLocked('file_transfer') }, 'icon-button']"
+              @click="toggleLock('file_transfer')"
+              :disabled="!admin"
+              :aria-label="lockedTooltip('file_transfer')"
+              v-tooltip="{
+                content: lockedTooltip('file_transfer'),
+                placement: 'bottom',
+                offset: 5,
+                boundariesElement: 'body',
+                delay: { show: 300, hide: 100 },
+              }"
+            >
+              <i class="fas fa-file" aria-hidden="true" /><span>{{ lockedTooltip('file_transfer') }}</span>
+            </button>
+          </li>
+        </ul>
+      </details>
+      <ul class="menu">
+        <li>
+          <span v-if="showBadge" class="badge">&bull;</span>
+          <button
+            type="button"
+            class="icon-button toggle"
+            aria-controls="room-panel"
+            :aria-expanded="!!$accessor.client.side"
+            :aria-label="$t('ui.toggle_room_panel')"
+            @click="toggleMenu"
+          >
+            <i class="fas fa-comment-dots" aria-hidden="true" />
+          </button>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -202,6 +224,12 @@
           font-size: 9px;
           line-height: 10px;
         }
+
+        .connection-path {
+          color: $text-muted;
+          font-size: 9px;
+          line-height: 10px;
+        }
       }
 
       &.connected .status-dot {
@@ -219,6 +247,16 @@
       &.poor .status-dot {
         background: $style-error;
         box-shadow: 0 0 0 3px rgba($style-error, 0.14);
+      }
+
+      // Compact headers intentionally hide the text. Keep the path visible
+      // there through the dot: green is direct, yellow is TURN relay.
+      &.direct .status-dot {
+        background: $style-primary;
+      }
+
+      &.relay .status-dot {
+        background: $style-warning;
       }
 
       .quality-bars {
@@ -438,93 +476,115 @@
 </style>
 
 <script lang="ts">
-  import { Component, Vue } from 'vue-property-decorator'
+  import { defineComponent } from 'vue'
   import { AdminLockResource } from '~/neko/messages'
 
-  @Component({ name: 'neko-header' })
-  export default class extends Vue {
-    get connectionState() {
-      return this.$accessor.connection.state
-    }
+  export default defineComponent({
+    name: 'neko-header',
+    data: () => ({ readTexts: 0 }),
+    computed: {
+      connectionState() {
+        return this.$accessor.connection.state
+      },
 
-    get networkQuality() {
-      return this.$accessor.connection.quality
-    }
+      networkQuality() {
+        return this.$accessor.connection.quality
+      },
 
-    get networkRtt() {
-      return this.$accessor.connection.rtt
-    }
+      networkRtt() {
+        return this.$accessor.connection.rtt
+      },
 
-    get connected() {
-      return this.$accessor.connection.connected
-    }
+      networkPath() {
+        return this.$accessor.connection.path
+      },
 
-    get connectionLabel() {
-      if (this.connectionState === 'connected') {
-        return this.$t('connection.connected')
-      }
-      if (this.connectionState === 'connecting') {
-        return this.$t('connection.connecting')
-      }
-      if (this.connectionState === 'reconnecting') {
-        return this.$t('connection.reconnecting')
-      }
-      return this.$t('connection.disconnected')
-    }
+      networkProtocol() {
+        return this.$accessor.connection.protocol
+      },
 
-    get connectionTitle() {
-      if (this.networkRtt !== null && this.networkQuality !== 'unknown') {
-        return `${this.connectionLabel} · ${this.networkRtt} ms · ${this.$t(
-          'connection.network_' + this.networkQuality,
-        )}`
-      }
-      return this.connectionLabel as string
-    }
+      networkPathLabel() {
+        const path = this.$t(`connection.path_${this.networkPath}`) as string
+        return this.networkProtocol === 'unknown' ? path : `${path} · ${this.networkProtocol.toUpperCase()}`
+      },
 
-    get admin() {
-      return this.$accessor.user.admin
-    }
+      connected() {
+        return this.$accessor.connection.connected
+      },
 
-    get locked() {
-      return this.$accessor.session.locked
-    }
+      connectionLabel() {
+        if (this.connectionState === 'connected') {
+          return this.$t('connection.connected')
+        }
+        if (this.connectionState === 'connecting') {
+          return this.$t('connection.connecting')
+        }
+        if (this.connectionState === 'reconnecting') {
+          return this.$t('connection.reconnecting')
+        }
+        return this.$t('connection.disconnected')
+      },
 
-    get side() {
-      return this.$accessor.client.side
-    }
+      connectionTitle() {
+        if (this.networkRtt !== null && this.networkQuality !== 'unknown') {
+          const quality = `${this.connectionLabel} · ${this.networkRtt} ms · ${this.$t(
+            'connection.network_' + this.networkQuality,
+          )}`
+          return this.networkPath === 'unknown' ? quality : `${quality} · ${this.networkPathLabel}`
+        }
+        return this.connectionLabel as string
+      },
 
-    get texts() {
-      return this.$accessor.chat.texts
-    }
+      admin() {
+        return this.$accessor.user.admin
+      },
 
-    get showBadge() {
-      return !this.side && this.readTexts != this.texts
-    }
+      locked() {
+        return this.$accessor.session.locked
+      },
 
-    get fileTransfer() {
-      return this.$accessor.remote.fileTransfer
-    }
+      side() {
+        return this.$accessor.client.side
+      },
 
-    toggleLock(resource: AdminLockResource) {
-      this.$accessor.session.toggleLock(resource)
-    }
+      texts() {
+        return this.$accessor.chat.texts
+      },
 
-    isLocked(resource: AdminLockResource): boolean {
-      return this.$accessor.session.isLocked(resource)
-    }
+      showBadge() {
+        return !this.side && this.readTexts != this.texts
+      },
 
-    readTexts: number = 0
-    toggleMenu() {
-      this.$accessor.client.toggleSide()
-      this.readTexts = this.texts
-    }
+      fileTransfer() {
+        return this.$accessor.remote.fileTransfer
+      },
+    },
+    methods: {
+      closeAdminMenu(event: KeyboardEvent) {
+        const menu = event.currentTarget as HTMLDetailsElement
+        menu.open = false
+        menu.querySelector('summary')?.focus()
+      },
+      toggleLock(resource: AdminLockResource) {
+        this.$accessor.session.toggleLock(resource)
+      },
 
-    lockedTooltip(resource: AdminLockResource) {
-      if (this.admin) {
-        return this.$t(`locks.${resource}.` + (this.isLocked(resource) ? `unlock` : `lock`))
-      }
+      isLocked(resource: AdminLockResource): boolean {
+        return this.$accessor.session.isLocked(resource)
+      },
 
-      return this.$t(`locks.${resource}.` + (this.isLocked(resource) ? `locked` : `unlocked`))
-    }
-  }
+      toggleMenu() {
+        this.$accessor.client.toggleSide()
+        this.readTexts = this.texts
+      },
+
+      lockedTooltip(resource: AdminLockResource) {
+        if (this.admin) {
+          return this.$t(`locks.${resource}.` + (this.isLocked(resource) ? `unlock` : `lock`))
+        }
+
+        return this.$t(`locks.${resource}.` + (this.isLocked(resource) ? `locked` : `unlocked`))
+      },
+    },
+  })
 </script>

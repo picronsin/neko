@@ -1,0 +1,256 @@
+// Room chrome: restrained surfaces, consistent targets, and a compact stage.
+#neko {
+  .header {
+    padding: 0 20px;
+    .brand-mark {
+      border: 0;
+      background: transparent;
+    }
+    .brand-caption {
+      font-size: 11px;
+      letter-spacing: 0;
+    }
+    .connection-indicator {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+    .menu {
+      gap: 4px;
+    }
+    .menu li .icon-button {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: transparent;
+    }
+    .menu li .icon-button.toggle {
+      background: $background-secondary;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .room-options {
+      position: relative;
+      summary {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        cursor: pointer;
+        list-style: none;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary:hover,
+      &[open] summary {
+        background: $background-secondary;
+      }
+      .room-options-list {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: min(300px, calc(100vw - 24px));
+        padding: 6px;
+        border: 1px solid $background-modifier-accent;
+        border-radius: 12px;
+        background: $background-primary;
+        box-shadow: $elevation-high;
+        button {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-height: 44px;
+          width: 100%;
+          padding: 10px 12px;
+          text-align: left;
+          border: 0;
+          border-radius: 6px;
+          color: $text-normal;
+          background: transparent;
+          cursor: pointer;
+          font-size: 13px;
+          line-height: 1.5;
+        }
+        button:hover {
+          background: $background-modifier-hover;
+        }
+        button:disabled {
+          color: $text-muted;
+          cursor: default;
+        }
+        button.locked {
+          color: $style-warning;
+        }
+        i {
+          width: 20px;
+          text-align: center;
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+  .members {
+    padding: 0;
+    .members-container {
+      padding: 0;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+    .members-list {
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      gap: 4px;
+      padding: 4px 0;
+    }
+    .members-list li .member {
+      width: 40px;
+      height: 40px;
+      margin: 0;
+      border-radius: 50%;
+    }
+    .member .avatar {
+      width: 32px !important;
+      height: 32px !important;
+    }
+  }
+  .room-menu .controls {
+    > ul {
+      gap: 4px;
+    }
+    li {
+      font-size: 19px;
+      flex-shrink: 0;
+    }
+    li > button,
+    .volume-button {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+    }
+    li > button.request {
+      display: flex;
+      gap: 8px;
+      width: auto;
+      padding: 0 14px;
+      background: $background-modifier-selected;
+      color: $style-primary;
+    }
+    .control-label {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .volume input[type='range'] {
+      width: 88px;
+      height: 44px;
+    }
+    .switch {
+      height: 44px;
+      display: flex;
+      align-items: center;
+    }
+    .switch > span {
+      top: 10px;
+      bottom: 10px;
+    }
+    .switch input:focus-visible + span {
+      outline: 2px solid $style-primary;
+      outline-offset: 3px;
+    }
+  }
+  .emotes .picker-toggle {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: $background-secondary;
+  }
+  .emotes .emote-option {
+    min-width: 44px;
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+  }
+  .panel-footer .menu-actions {
+    justify-content: flex-end;
+  }
+  .panel-footer .action-button,
+  .panel-footer .locale-picker select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .connect {
+    background: $background-tertiary;
+    overflow-y: auto;
+    .window {
+      background: $background-primary;
+      border-radius: 16px;
+      box-shadow: none;
+      margin: auto;
+    }
+    .window .logo-mark {
+      background: transparent;
+      border: 0;
+    }
+    .window .primary-button {
+      box-shadow: none;
+      min-height: 48px;
+    }
+  }
+}
+@media (max-width: 600px) {
+  #neko {
+    .header {
+      padding: 0 8px;
+      gap: 4px;
+    }
+    .header .brand-mark {
+      display: none;
+    }
+    .header .brand-copy .brand-name {
+      font-size: 20px;
+    }
+    .header .connection-indicator {
+      margin: 0;
+    }
+    .header .menu {
+      gap: 0;
+    }
+    .room-menu .controls {
+      > ul {
+        gap: 0;
+      }
+      .control-label {
+        display: none;
+      }
+      li > button.request {
+        width: 44px;
+        padding: 0;
+        justify-content: center;
+      }
+      .volume input[type='range'] {
+        width: 64px;
+      }
+    }
+    .connect {
+      padding: 16px;
+      .window {
+        padding: 24px;
+      }
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

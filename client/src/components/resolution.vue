@@ -1,17 +1,16 @@
 <template>
-  <vue-context class="context" ref="context">
-    <template v-for="(conf, i) in configurations">
-      <li
-        :key="i"
-        @click="screenSet(conf)"
-        :class="[conf.width === width && conf.height === height && conf.rate === rate ? 'active' : '']"
-      >
-        <i class="fas fa-desktop"></i>
-        <span>{{ conf.width }}x{{ conf.height }}</span>
-        <small>{{ conf.rate }}</small>
-      </li>
-    </template>
-  </vue-context>
+  <div v-if="visible" class="context" ref="context" :style="menuStyle">
+    <li
+      v-for="(conf, i) in configurations"
+      :key="i"
+      @click="screenSet(conf)"
+      :class="[conf.width === width && conf.height === height && conf.rate === rate ? 'active' : '']"
+    >
+      <i class="fas fa-desktop"></i>
+      <span>{{ conf.width }}x{{ conf.height }}</span>
+      <small>{{ conf.rate }}</small>
+    </li>
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -97,43 +96,68 @@
 </style>
 
 <script lang="ts">
-  import { Component, Ref, Vue } from 'vue-property-decorator'
+  import { defineComponent } from 'vue'
   import { ScreenResolution } from '~/neko/types'
 
-  // @ts-ignore
-  import { VueContext } from 'vue-context'
-
-  @Component({
+  export default defineComponent({
     name: 'neko-resolution',
-    components: {
-      'vue-context': VueContext,
+    components: {},
+    data: () => ({ visible: false, menuStyle: {} as Record<string, string> }),
+    computed: {
+      width() {
+        return this.$accessor.video.width
+      },
+
+      height() {
+        return this.$accessor.video.height
+      },
+
+      rate() {
+        return this.$accessor.video.rate
+      },
+
+      configurations() {
+        return this.$accessor.video.configurations
+      },
+    },
+    mounted() {
+      // The video overlay deliberately stops pointer events so it can capture
+      // remote input. Listen in the capture phase to close the menu even when
+      // the click originated on that overlay.
+      document.addEventListener('pointerdown', this.onDocumentPointerDown, true)
+      document.addEventListener('keydown', this.onDocumentKeyDown)
+    },
+    beforeUnmount() {
+      document.removeEventListener('pointerdown', this.onDocumentPointerDown, true)
+      document.removeEventListener('keydown', this.onDocumentKeyDown)
+    },
+    methods: {
+      open(event: MouseEvent) {
+        this.visible = true
+        this.menuStyle = { left: String(event.clientX) + 'px', top: String(event.clientY) + 'px' }
+      },
+
+      onDocumentPointerDown(event: PointerEvent) {
+        if (!this.visible) {
+          return
+        }
+
+        const context = this.$refs.context as HTMLElement | undefined
+        if (!context?.contains(event.target as Node)) {
+          this.visible = false
+        }
+      },
+
+      onDocumentKeyDown(event: KeyboardEvent) {
+        if (event.key === 'Escape') {
+          this.visible = false
+        }
+      },
+
+      screenSet(resolution: ScreenResolution) {
+        this.$accessor.video.screenSet(resolution)
+        this.visible = false
+      },
     },
   })
-  export default class extends Vue {
-    @Ref('context') readonly context!: VueContext
-
-    get width() {
-      return this.$accessor.video.width
-    }
-
-    get height() {
-      return this.$accessor.video.height
-    }
-
-    get rate() {
-      return this.$accessor.video.rate
-    }
-
-    get configurations() {
-      return this.$accessor.video.configurations
-    }
-
-    open(event: MouseEvent) {
-      this.context.open(event)
-    }
-
-    screenSet(resolution: ScreenResolution) {
-      this.$accessor.video.screenSet(resolution)
-    }
-  }
 </script>

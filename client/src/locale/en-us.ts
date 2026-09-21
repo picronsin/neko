@@ -150,6 +150,9 @@ export const connection = {
   network_good: 'Good network quality',
   network_fair: 'Fair network quality',
   network_poor: 'Poor network quality',
+  path_direct: 'Direct',
+  path_relay: 'TURN relay',
+  path_unknown: 'Checking connection path',
   kicked: 'You have been removed from this room.',
   button_confirm: 'OK',
 }

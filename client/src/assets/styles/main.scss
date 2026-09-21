@@ -14,6 +14,7 @@
 @import "vendor/github";
 @import "vendor/emoji";
 @import "vendor/emote";
+@import "layout";
 
 html, body {
   -webkit-font-smoothing: subpixel-antialiased;
@@ -48,6 +49,11 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 [tabindex]:focus-visible {
+  outline: 2px solid $style-primary;
+  outline-offset: 2px;
+}
+
+summary:focus-visible {
   outline: 2px solid $style-primary;
   outline-offset: 2px;
 }

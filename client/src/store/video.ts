@@ -1,4 +1,4 @@
-import { getterTree, mutationTree, actionTree } from 'typed-vuex'
+import { getterTree, mutationTree, actionTree } from './helpers'
 import { get, set } from '~/utils/localstorage'
 import { ScreenConfigurations, ScreenResolution } from '~/neko/types'
 import { normalizeScreenConfigurations } from '~/neko/screen'
@@ -74,10 +74,9 @@ export const mutations = mutationTree(state, {
     }
 
     if (height == width) {
-      return {
-        horizontal: 1,
-        vertical: 1,
-      }
+      state.horizontal = 1
+      state.vertical = 1
+      return
     }
 
     let dividend = width

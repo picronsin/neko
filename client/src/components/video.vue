@@ -4,9 +4,7 @@
       <div ref="container" class="player-container">
         <video ref="video" data-testid="remote-video" playsinline />
         <div class="emotes">
-          <template v-for="(emote, index) in emotes">
-            <neko-emote :id="index" :key="index" />
-          </template>
+          <neko-emote v-for="(emote, index) in emotes" :id="index" :key="index" />
         </div>
         <textarea
           ref="overlay"
@@ -37,6 +35,18 @@
         </div>
         <div ref="aspect" class="player-aspect" />
       </div>
+      <!-- The regular layout renders this indicator in the header. Keep the
+        video copy only for cast/embed layouts where the header is hidden. -->
+      <div
+        v-if="hideControls || extraControls"
+        class="connection-status"
+        :class="[connectionState, networkPath]"
+        data-testid="video-connection-status"
+        role="status"
+      >
+        <span class="connection-status-dot" aria-hidden="true" />
+        <span>{{ connectionStatus }}</span>
+      </div>
       <ul v-if="!fullscreen && !hideControls" class="video-menu top">
         <li>
           <button
@@ -58,7 +68,7 @@
             <i class="fas fa-desktop" aria-hidden="true" />
           </button>
         </li>
-        <li v-if="!controlLocked && !implicitHosting" :class="extraControls || 'extra-control'">
+        <li v-if="!controlLocked && !implicitHosting" :class="extraControls ? '' : 'extra-control'">
           <button
             type="button"
             class="video-action"
@@ -98,7 +108,7 @@
             <i class="fas fa-external-link-alt" aria-hidden="true" />
           </button>
         </li>
-        <li v-if="hosting && is_touch_device" :class="extraControls || 'extra-control'">
+        <li v-if="hosting && is_touch_device" :class="extraControls ? '' : 'extra-control'">
           <button
             type="button"
             class="video-action"
@@ -132,6 +142,49 @@
       justify-content: center;
       align-items: center;
       background: #000;
+
+      .connection-status {
+        position: absolute;
+        z-index: 8;
+        top: $party-gutter;
+        left: $party-gutter;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        max-width: calc(100% - #{$party-gutter} - #{$party-gutter});
+        padding: 6px 9px;
+        border: 1px solid rgba(#fff, 0.14);
+        border-radius: 8px;
+        color: rgba(#fff, 0.84);
+        background: rgba(#05070c, 0.72);
+        box-shadow: 0 4px 16px rgba(#000, 0.24);
+        font-size: 11px;
+        line-height: 13px;
+        pointer-events: none;
+
+        .connection-status-dot {
+          width: 7px;
+          height: 7px;
+          flex: 0 0 auto;
+          border-radius: 50%;
+          background: $interactive-muted;
+        }
+
+        &.connected .connection-status-dot,
+        &.direct .connection-status-dot {
+          background: $style-primary;
+        }
+
+        &.connecting .connection-status-dot,
+        &.reconnecting .connection-status-dot,
+        &.relay .connection-status-dot {
+          background: $style-warning;
+        }
+
+        &.disconnected .connection-status-dot {
+          background: $style-error;
+        }
+      }
 
       .video-menu {
         position: absolute;
@@ -275,7 +328,7 @@
 </style>
 
 <script lang="ts">
-  import { Component, Ref, Watch, Vue, Prop } from 'vue-property-decorator'
+  import { Component, Ref, Watch, Vue, Prop } from 'vue-facing-decorator'
   import ResizeObserver from 'resize-observer-polyfill'
   import { elementRequestFullscreen, onFullscreenChange, isFullscreen, lockKeyboard, unlockKeyboard } from '~/utils'
   import { ControlInputController } from '~/sdk/control-input'
@@ -298,19 +351,46 @@
     },
   })
   export default class extends Vue {
+    get connectionState() {
+      return this.$accessor.connection.state
+    }
+
+    get networkPath() {
+      return this.$accessor.connection.path
+    }
+
+    get networkProtocol() {
+      return this.$accessor.connection.protocol
+    }
+
+    get networkRtt() {
+      return this.$accessor.connection.rtt
+    }
+
+    get connectionStatus() {
+      if (this.connectionState !== 'connected') {
+        return this.$t(`connection.${this.connectionState}`) as string
+      }
+
+      const path = this.$t(`connection.path_${this.networkPath}`) as string
+      const pathAndProtocol =
+        this.networkProtocol === 'unknown' ? path : `${path} · ${this.networkProtocol.toUpperCase()}`
+      return this.networkRtt === null ? pathAndProtocol : `${pathAndProtocol} · ${this.networkRtt} ms`
+    }
+
     @Ref('component') readonly _component!: HTMLElement
     @Ref('container') readonly _container!: HTMLElement
     @Ref('overlay') readonly _overlay!: HTMLTextAreaElement
     @Ref('aspect') readonly _aspect!: HTMLElement
     @Ref('player') readonly _player!: HTMLElement
     @Ref('video') readonly _video!: HTMLVideoElement
-    @Ref('resolution') readonly _resolution!: Resolution
+    @Ref('resolution') readonly _resolution!: InstanceType<typeof Resolution>
     @Ref('clipboard') readonly _clipboard!: Clipboard
 
     // all controls are hidden (e.g. for cast mode)
-    @Prop(Boolean) readonly hideControls!: boolean
+    @Prop({ type: Boolean, default: false } as any) readonly hideControls!: boolean
     // extra controls are shown (e.g. for embed mode)
-    @Prop(Boolean) readonly extraControls!: boolean
+    @Prop({ type: Boolean, default: false } as any) readonly extraControls!: boolean
 
     private keyboard = GuacamoleKeyboard()
     private inputController = new ControlInputController({
@@ -324,6 +404,7 @@
     private mutedOverlay = true
     private lastTextAreaValue = ''
     private resizeFrame?: number
+    private layoutResolution = ''
 
     get admin() {
       return this.$accessor.user.admin
@@ -470,6 +551,12 @@
 
     @Watch('height')
     onHeightChanged() {
+      this.scheduleResize()
+    }
+
+    @Watch('horizontal')
+    @Watch('vertical')
+    onAspectChanged() {
       this.scheduleResize()
     }
 
@@ -755,7 +842,7 @@
     }
 
     openClipboard() {
-      this._clipboard.open()
+      ;(this.$refs.clipboard as InstanceType<typeof Clipboard> | undefined)?.open()
     }
 
     async syncClipboard() {
@@ -774,6 +861,15 @@
 
     sendMousePos(e: MouseEvent) {
       const { w, h } = this.$accessor.video.resolution
+
+      // A screen-size event updates the store before the browser has painted
+      // the new aspect ratio. Ensure the first pointer event after a ratio
+      // change uses the new geometry instead of the previous 16:9 rectangle.
+      const resolutionKey = `${w}x${h}`
+      if (resolutionKey !== this.layoutResolution) {
+        this.onResize()
+      }
+
       const rect = this._overlay.getBoundingClientRect()
 
       const point = this.inputController.pointer(e, rect, { width: w, height: h })
@@ -963,10 +1059,15 @@
       this._player.style.width = `${offsetWidth}px`
       this._player.style.height = `${offsetHeight}px`
 
-      const aspectRatio = this.horizontal / this.vertical
+      // Derive the rendered aspect ratio from the authoritative dimensions.
+      // This avoids a stale ratio during a resolution transition and keeps
+      // the input overlay aligned with the video that receives pointer data.
+      const aspectRatio = this.width > 0 && this.height > 0 ? this.width / this.height : this.horizontal / this.vertical
       const contentWidth = Math.min(offsetWidth, aspectRatio * offsetHeight)
+      this._container.style.width = `${contentWidth}px`
       this._container.style.maxWidth = `${contentWidth}px`
-      this._aspect.style.paddingBottom = `${(this.vertical / this.horizontal) * 100}%`
+      this._aspect.style.paddingBottom = `${(1 / aspectRatio) * 100}%`
+      this.layoutResolution = `${this.width}x${this.height}`
     }
 
     private scheduleResize = () => {

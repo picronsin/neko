@@ -1,5 +1,5 @@
 import md, { SingleNodeParserRule, HtmlOutputRule, defaultRules, State, Rules } from 'simple-markdown'
-import { Component, Vue, Prop } from 'vue-property-decorator'
+import { defineComponent, h } from 'vue'
 
 const { blockQuote, inlineCode, codeBlock, autolink, newline, escape, strong, text, link, url, em, u, br } =
   defaultRules
@@ -268,17 +268,13 @@ const rules: MarkdownRules = {
 const parser = md.parserFor(rules)
 const htmlOutput = md.outputFor<HtmlOutputRule, 'html'>(rules, 'html')
 
-@Component({
+export default defineComponent({
   name: 'neko-markdown',
-})
-export default class extends Vue {
-  @Prop({ required: true })
-  source!: string
-
-  @Prop({ default: false })
-  openInApp!: boolean
-
-  render(h: any) {
+  props: {
+    source: { type: String, required: true },
+    openInApp: { type: Boolean, default: false },
+  },
+  render() {
     const state: MarkdownState = {
       inline: true,
       inQuote: false,
@@ -286,6 +282,6 @@ export default class extends Vue {
       cssModuleNames: null,
       openInApp: this.openInApp,
     }
-    return h({ template: `<div>${htmlOutput(parser(this.source, state), state)}</div>` })
-  }
-}
+    return h('div', { innerHTML: htmlOutput(parser(this.source, state), state) })
+  },
+})

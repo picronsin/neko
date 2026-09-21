@@ -394,7 +394,7 @@
 </style>
 
 <script lang="ts">
-  import { Component, Ref, Vue } from 'vue-property-decorator'
+  import { Component, Ref, Vue } from 'vue-facing-decorator'
 
   import Avatar from './avatar.vue'
 

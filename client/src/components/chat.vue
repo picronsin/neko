@@ -130,7 +130,7 @@
         background-color: $background-floating;
       }
 
-      ::v-deep *::selection {
+      :deep(*::selection) {
         background: $text-link;
       }
 
@@ -206,7 +206,7 @@
               }
             }
 
-            ::v-deep .content-body {
+            :deep(.content-body) {
               color: $text-normal;
               line-height: 22px;
               word-wrap: break-word;
@@ -429,7 +429,7 @@
 </style>
 
 <script lang="ts">
-  import { Component, Ref, Watch, Vue } from 'vue-property-decorator'
+  import { Component, Ref, Watch, Vue } from 'vue-facing-decorator'
   import { formatRelative } from 'date-fns'
 
   import { Member } from '~/neko/types'
@@ -528,8 +528,8 @@
       this._context.open(event, { member })
     }
 
-    onClick(event: { target?: HTMLElement; preventDefault(): void }) {
-      const { target } = event
+    onClick(event: PointerEvent) {
+      const target = event.target as HTMLElement | null
       if (!target) {
         return
       }
