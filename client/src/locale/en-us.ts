@@ -40,6 +40,14 @@ export const chat = {
   empty: 'No messages yet. Say hello to the room.',
 }
 
+export const voice = {
+  title: 'Voice chat',
+  join: 'Join voice',
+  leave: 'Leave voice',
+  connecting: 'Connecting…',
+  secure_required: 'Voice requires HTTPS or localhost.',
+}
+
 export const connect = {
   login_title: 'Please Log In',
   invitation_title: 'You have been invited to this room',

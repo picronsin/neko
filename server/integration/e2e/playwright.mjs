@@ -91,7 +91,7 @@ try {
   const target = new URL(baseURL)
   browser = await chromium.launch({
     headless: process.env.NEKO_E2E_HEADLESS !== '0',
-    args: ['--no-sandbox', '--use-fake-ui-for-media-stream', '--autoplay-policy=no-user-gesture-required'],
+    args: ['--no-sandbox', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--autoplay-policy=no-user-gesture-required'],
   })
   const context = await browser.newContext({
     viewport: { width: viewportWidth, height: viewportHeight },
@@ -148,6 +148,63 @@ try {
     return { width: video.videoWidth, height: video.videoHeight, readyState: video.readyState }
   })
   const firstFrameMs = Math.round(performance.now() - startedAt)
+
+  if (process.env.NEKO_E2E_VOICE === '1') {
+    const callers = []
+    for (let i = 0; i < 6; i++) {
+      const callContext = await browser.newContext({ permissions: ['microphone'] })
+      await callContext.addInitScript(() => {
+        window.voiceTestPeers = []
+        const Original = window.RTCPeerConnection
+        window.RTCPeerConnection = class extends Original {
+          constructor(...args) { super(...args); window.voiceTestPeers.push(this) }
+        }
+      })
+      const caller = await callContext.newPage()
+      caller.setDefaultTimeout(timeout)
+      await caller.goto(target.toString())
+      await caller.getByTestId('displayname-input').fill(`voice-test-${i}`)
+      await caller.getByTestId('password-input').fill(password)
+      await caller.getByTestId('connect-submit').click()
+      await caller.locator('button[aria-controls="room-panel"]').click()
+      await caller.getByTestId('voice-join').click()
+      await caller.getByTestId('voice-leave').waitFor()
+      callers.push(caller)
+    }
+    for (const caller of callers) {
+      await caller.waitForFunction(async () => {
+        let receiving = 0
+        for (const peer of window.voiceTestPeers) {
+          // Desktop peer has video receivers; count independent audio peers only.
+          if (peer.getReceivers().some(receiver => receiver.track.kind === 'video')) continue
+          const stats = await peer.getStats()
+          if ([...stats.values()].some(stat => stat.type === 'inbound-rtp' && stat.kind === 'audio' && stat.packetsReceived > 0)) receiving++
+        }
+        return receiving === 5
+      }, undefined, { timeout })
+    }
+    await callers[0].getByTestId('voice-mute').click()
+    await callers[0].waitForFunction(() => window.voiceTestPeers.filter(peer => !peer.getReceivers().some(receiver => receiver.track.kind === 'video')).every(peer => peer.getSenders().every(sender => !sender.track || !sender.track.enabled)))
+    await callers[0].getByTestId('voice-leave').click()
+    await callers[1].waitForFunction(() => document.querySelectorAll('.voice-call li').length === 5)
+    for (const caller of callers) await caller.context().close()
+  }
+
+  if (process.env.NEKO_E2E_UI === '1') {
+    const errors = []
+    page.on('pageerror', (error) => errors.push(error.message))
+    const toolbar = page.locator('.video-menu')
+    await toolbar.locator('button').filter({ has: page.locator('.fa-desktop') }).click()
+    await page.locator('.video .context li').first().waitFor({ state: 'visible' })
+    await page.locator('[data-testid="remote-video"]').click({ force: true })
+    await toolbar.locator('button').filter({ has: page.locator('.fa-expand') }).click()
+    await page.waitForFunction(() => !!document.fullscreenElement)
+    await page.evaluate(() => document.exitFullscreen())
+    await toolbar.locator('button').filter({ has: page.locator('.fa-expand') }).waitFor({ state: 'visible' })
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.getByTestId('remote-video').waitFor({ state: 'visible' })
+    if (errors.length) throw new Error(`UI errors: ${errors.join('; ')}`)
+  }
 
   if (!events.includes('system/init')) {
     throw new Error('signaling did not deliver system/init')

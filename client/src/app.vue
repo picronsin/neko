@@ -31,7 +31,7 @@
         </div>
       </main>
       <div v-if="!videoOnly && side" class="panel-backdrop" @click.stop.prevent="closeSide" />
-      <neko-side v-if="!videoOnly && side" />
+      <neko-side v-if="!videoOnly" v-show="side" />
       <neko-connect v-if="!authenticated" />
       <neko-about v-if="about" />
       <notifications

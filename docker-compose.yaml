@@ -12,28 +12,22 @@ services:
       - "neko-data:/home/neko/.local/share/neko"
       # Persist Chromium settings, bookmarks, extensions and history across
       # container restarts by mounting the profile directory.
-      # See: https://neko.m1k1o.net/docs/v3/customization/browsers#persistent-profile
       # - "./profile:/home/neko/.config/chromium"
 
       # Or mount your own pre-configured Chromium profile instead of an empty one.
-      # See: https://neko.m1k1o.net/docs/v3/customization/browsers#persistent-profile
       # - "./my-custom-profile:/home/neko/.config/chromium"
     environment:
       # Use one MUX port for WebRTC UDP plus TCP fallback.
-      # See: https://neko.m1k1o.net/docs/v3/configuration/webrtc#network
       NEKO_WEBRTC_UDPMUX: 52000
       NEKO_WEBRTC_TCPMUX: 52000
       # Specify the screen resolution and refresh rate for the virtual desktop. The
       # default is 1920x1080@30, but you can change it to any other resolution.
-      # See: https://neko.m1k1o.net/docs/v3/configuration/desktop#screen
       NEKO_DESKTOP_SCREEN: 1920x1080@30
       # You can configure a password for the default user and admin accounts. The
       # default user account is "neko" and the default admin account is "admin".
-      # See: https://neko.m1k1o.net/docs/v3/configuration/authentication#member.multiuser
       NEKO_MEMBER_MULTIUSER_USER_PASSWORD: neko
       NEKO_MEMBER_MULTIUSER_ADMIN_PASSWORD: admin
       # Specifying reachable IP by clients is required when running Neko.
-      # See: https://neko.m1k1o.net/docs/v3/configuration/webrtc#nat1to1
       NEKO_WEBRTC_NAT1TO1: <your-IP>
 
 volumes:

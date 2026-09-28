@@ -2,8 +2,6 @@ package config
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -45,8 +43,6 @@ type WebRTC struct {
 	ICETrickle         bool
 	ICEServersFrontend []types.ICEServer
 	ICEServersBackend  []types.ICEServer
-	EphemeralMin       uint16
-	EphemeralMax       uint16
 	TCPMux             int
 	UDPMux             int
 
@@ -68,12 +64,6 @@ func (WebRTC) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	// Looks like this is conflicting with the frontend and backend ICE servers since latest versions
-	//cmd.PersistentFlags().String("webrtc.iceservers", "[]", "STUN and TURN servers used by the ICE agent")
-	//if err := viper.BindPFlag("webrtc.iceservers", cmd.PersistentFlags().Lookup("webrtc.iceservers")); err != nil {
-	//	return err
-	//}
-
 	cmd.PersistentFlags().String("webrtc.iceservers.frontend", "[]", "STUN and TURN servers used by the frontend")
 	if err := viper.BindPFlag("webrtc.iceservers.frontend", cmd.PersistentFlags().Lookup("webrtc.iceservers.frontend")); err != nil {
 		return err
@@ -84,17 +74,12 @@ func (WebRTC) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("webrtc.epr", "", "limits the pool of ephemeral ports that ICE UDP connections can allocate from")
-	if err := viper.BindPFlag("webrtc.epr", cmd.PersistentFlags().Lookup("webrtc.epr")); err != nil {
-		return err
-	}
-
 	cmd.PersistentFlags().Int("webrtc.tcpmux", 0, "single TCP mux port for all peers")
 	if err := viper.BindPFlag("webrtc.tcpmux", cmd.PersistentFlags().Lookup("webrtc.tcpmux")); err != nil {
 		return err
 	}
 
-	cmd.PersistentFlags().Int("webrtc.udpmux", 0, "single UDP mux port for all peers, replaces EPR")
+	cmd.PersistentFlags().Int("webrtc.udpmux", 52000, "single UDP mux port for all peers")
 	if err := viper.BindPFlag("webrtc.udpmux", cmd.PersistentFlags().Lookup("webrtc.udpmux")); err != nil {
 		return err
 	}
@@ -109,7 +94,7 @@ func (WebRTC) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("webrtc.connectivity.mode", "", "optional connectivity mode (direct, frp, or auto)")
+	cmd.PersistentFlags().String("webrtc.connectivity.mode", "direct", "connectivity mode (direct, frp, or auto)")
 	if err := viper.BindPFlag("webrtc.connectivity.mode", cmd.PersistentFlags().Lookup("webrtc.connectivity.mode")); err != nil {
 		return err
 	}
@@ -175,6 +160,10 @@ func (WebRTC) Init(cmd *cobra.Command) error {
 }
 
 func (s *WebRTC) Set() {
+	if err := validateUnsupportedLegacyConfig(); err != nil {
+		log.Panic().Err(err).Msg("unsupported WebRTC configuration")
+	}
+
 	s.ICELite = viper.GetBool("webrtc.icelite")
 	s.ICETrickle = viper.GetBool("webrtc.icetrickle")
 
@@ -196,50 +185,17 @@ func (s *WebRTC) Set() {
 		log.Warn().Msgf("ICE Lite is enabled, but backend ICE servers are configured. Backend ICE servers will be ignored.")
 	}
 
-	// if no frontend or backend ice servers are configured
+	// Use the documented default STUN server only when neither endpoint has an
+	// explicit ICE server. The obsolete global webrtc.iceservers value is
+	// deliberately rejected before this point.
 	if len(s.ICEServersFrontend) == 0 && len(s.ICEServersBackend) == 0 {
-		// parse global ice servers
-		var iceServers []types.ICEServer
-		if err := viper.UnmarshalKey("webrtc.iceservers", &iceServers, viper.DecodeHook(
-			utils.JsonStringAutoDecode(iceServers),
-		)); err != nil {
-			log.Warn().Err(err).Msgf("unable to parse global ICE servers")
-		}
-
-		// add default stun server if none are configured
-		if len(iceServers) == 0 {
-			iceServers = append(iceServers, types.ICEServer{
-				URLs: []string{defStunSrv},
-			})
-		}
-
-		s.ICEServersFrontend = append(s.ICEServersFrontend, iceServers...)
-		s.ICEServersBackend = append(s.ICEServersBackend, iceServers...)
+		defaultServer := types.ICEServer{URLs: []string{defStunSrv}}
+		s.ICEServersFrontend = append(s.ICEServersFrontend, defaultServer)
+		s.ICEServersBackend = append(s.ICEServersBackend, defaultServer)
 	}
 
 	s.TCPMux = viper.GetInt("webrtc.tcpmux")
 	s.UDPMux = viper.GetInt("webrtc.udpmux")
-
-	epr := viper.GetString("webrtc.epr")
-	if epr != "" {
-		min, max, err := parseEphemeralPortRange(epr)
-		if err != nil {
-			log.Panic().Err(err).Msg("unable to parse ephemeral port range")
-		}
-		s.EphemeralMin = min
-		s.EphemeralMax = max
-	}
-
-	if epr == "" && s.TCPMux == 0 && s.UDPMux == 0 {
-		// using default epr range
-		s.EphemeralMin = 59000
-		s.EphemeralMax = 59100
-
-		log.Warn().
-			Uint16("min", s.EphemeralMin).
-			Uint16("max", s.EphemeralMax).
-			Msgf("no TCP, UDP mux or epr specified, using default epr range")
-	}
 
 	s.Connectivity = connectivity.Mode(viper.GetString("webrtc.connectivity.mode"))
 	s.NAT1To1IPs = viper.GetStringSlice("webrtc.nat1to1")
@@ -259,7 +215,7 @@ func (s *WebRTC) Set() {
 		}
 	}
 
-	if err := s.validateConnectivity(epr); err != nil {
+	if err := s.validateConnectivity(); err != nil {
 		log.Panic().Err(err).Msg("invalid WebRTC connectivity configuration")
 	}
 
@@ -278,19 +234,8 @@ func (s *WebRTC) Set() {
 	s.Estimator.DiffThreshold = viper.GetFloat64("webrtc.estimator.diff_threshold")
 }
 
-func (s WebRTC) validateConnectivity(epr string) error {
-	if epr != "" && (s.TCPMux != 0 || s.UDPMux != 0) {
-		return fmt.Errorf("webrtc.epr cannot be combined with TCP or UDP mux ports")
-	}
-
-	if s.Connectivity == "" {
-		return nil
-	}
-
+func (s WebRTC) validateConnectivity() error {
 	if s.Connectivity == connectivity.ModeFRP {
-		if epr != "" {
-			return fmt.Errorf("frp connectivity mode cannot be combined with webrtc.epr")
-		}
 		if !viper.IsSet("webrtc.nat1to1") {
 			return fmt.Errorf("frp connectivity mode requires an explicit webrtc.nat1to1 IP")
 		}
@@ -307,12 +252,6 @@ func (s WebRTC) validateConnectivity(epr string) error {
 	}
 
 	if s.Connectivity == connectivity.ModeDirect {
-		// Existing direct deployments can use EPR without a MUX port. Preserve
-		// that configuration while validating explicit MUX plans when present.
-		if s.UDPMux == 0 && s.TCPMux == 0 {
-			return nil
-		}
-
 		plan := connectivity.MediaPortPlan{
 			Mode:       s.Connectivity,
 			UDPMuxPort: s.UDPMux,
@@ -340,25 +279,34 @@ func (s WebRTC) validateConnectivity(epr string) error {
 	return fmt.Errorf("unsupported connectivity mode %q", s.Connectivity)
 }
 
-func parseEphemeralPortRange(value string) (uint16, uint16, error) {
-	parts := strings.Split(value, "-")
-	if len(parts) != 2 || strings.TrimSpace(parts[0]) == "" || strings.TrimSpace(parts[1]) == "" {
-		return 0, 0, fmt.Errorf("expected <min>-<max>, got %q", value)
+func validateUnsupportedLegacyConfig() error {
+	if viper.IsSet("webrtc.epr") {
+		return fmt.Errorf("webrtc.epr is no longer supported; configure webrtc.udpmux (and optionally webrtc.tcpmux) instead")
 	}
 
-	min, err := strconv.ParseUint(strings.TrimSpace(parts[0]), 10, 32)
-	if err != nil || min == 0 || min > 65535 {
-		return 0, 0, fmt.Errorf("invalid ephemeral minimum port %q", parts[0])
+	if usesLegacyGlobalICEServers(viper.Get("webrtc.iceservers")) {
+		return fmt.Errorf("webrtc.iceservers is no longer supported; configure webrtc.iceservers.frontend and webrtc.iceservers.backend instead")
 	}
 
-	max, err := strconv.ParseUint(strings.TrimSpace(parts[1]), 10, 32)
-	if err != nil || max == 0 || max > 65535 {
-		return 0, 0, fmt.Errorf("invalid ephemeral maximum port %q", parts[1])
+	return nil
+}
+
+func usesLegacyGlobalICEServers(value any) bool {
+	if value == nil {
+		return false
 	}
 
-	if min > max {
-		return 0, 0, fmt.Errorf("ephemeral min port cannot be bigger than max")
+	// A nested frontend/backend configuration is represented as a map. Any
+	// other value is the old shared ICE-server list (including its JSON
+	// environment-variable form).
+	if values, ok := value.(map[string]any); ok {
+		for key := range values {
+			if key != "frontend" && key != "backend" {
+				return true
+			}
+		}
+		return false
 	}
 
-	return uint16(min), uint16(max), nil
+	return true
 }

@@ -16,6 +16,9 @@ docker compose -f demo/compose.local.yaml up -d --build
 Run one browser check. The first run builds a pinned Playwright image and may
 download the browser runtime:
 
+Set `NEKO_E2E_UI=1` with an administrator password to also check the video
+resolution menu, fullscreen entry/exit, and narrow-screen video visibility.
+
 ```bash
 export NEKO_E2E_PASSWORD="$NEKO_DEMO_ADMIN_PASSWORD"
 export NEKO_E2E_OUTPUT=/tmp/neko-e2e.json

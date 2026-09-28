@@ -491,7 +491,15 @@
     }
 
     member(id: string) {
-      return this.$accessor.user.members[id] || { id, displayname: this.$t('somebody') }
+      return (
+        this.$accessor.user.members[id] || {
+          id,
+          displayname: this.$t('somebody'),
+          admin: false,
+          muted: false,
+          avatar: undefined,
+        }
+      )
     }
 
     timestamp(time: Date) {

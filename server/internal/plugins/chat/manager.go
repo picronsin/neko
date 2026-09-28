@@ -28,6 +28,7 @@ func NewManager(
 }
 
 type Manager struct {
+	voice    voiceRoom
 	logger   zerolog.Logger
 	config   *Config
 	sessions types.SessionManager
@@ -62,6 +63,8 @@ func (m *Manager) sendEmote(session types.Session, emote string) {
 }
 
 func (m *Manager) Start() error {
+	m.sessions.OnDisconnected(func(session types.Session) { m.voice.remove(session.ID()) })
+	m.sessions.OnDeleted(func(session types.Session) { m.voice.remove(session.ID()) })
 	// send init message once a user connects
 	m.sessions.OnConnected(func(session types.Session) {
 		m.service.Initialize(session)
@@ -75,6 +78,7 @@ func (m *Manager) Shutdown() error {
 }
 
 func (m *Manager) Route(r types.Router) {
+	m.voiceRoutes(r)
 	r.With(auth.AdminsOnly).Post("/", m.sendMessageHandler)
 }
 

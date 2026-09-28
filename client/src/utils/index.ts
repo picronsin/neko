@@ -58,19 +58,7 @@ export function isFullscreen(): boolean {
 }
 
 export function onFullscreenChange(el: HTMLElement, fn: () => void) {
-  if (el.onfullscreenchange === null) {
-    el.onfullscreenchange = fn
-    //@ts-ignore
-  } else if (el.onmsfullscreenchange === null) {
-    //@ts-ignore
-    el.onmsfullscreenchange = fn
-    //@ts-ignore
-  } else if (el.onmozfullscreenchange === null) {
-    //@ts-ignore
-    el.onmozfullscreenchange = fn
-    //@ts-ignore
-  } else if (el.onwebkitfullscreenchange === null) {
-    //@ts-ignore
-    el.onwebkitfullscreenchange = fn
-  }
+  const events = ['fullscreenchange', 'MSFullscreenChange', 'mozfullscreenchange', 'webkitfullscreenchange']
+  events.forEach((event) => el.addEventListener(event, fn))
+  return () => events.forEach((event) => el.removeEventListener(event, fn))
 }

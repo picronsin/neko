@@ -1,4 +1,16 @@
 import * as assert from 'node:assert/strict'
+import { readonlyState } from '../src/store/readonly-state'
+
+const boundarySource = { members: [{ name: 'Alice' }], time: new Date(0) }
+const boundaryView = readonlyState(boundarySource)
+assert.throws(() => { boundaryView.members[0].name = 'Bob' }, TypeError)
+assert.throws(() => { boundaryView.members.push({ name: 'Bob' }) }, TypeError)
+assert.throws(() => { delete boundaryView.members[0].name }, TypeError)
+assert.throws(() => { Object.defineProperty(boundaryView.members[0], 'name', { value: 'Bob' }) }, TypeError)
+assert.equal(boundaryView.time, boundarySource.time, 'native objects must retain their identity')
+assert.equal(readonlyState(boundarySource), boundaryView, 'read views must be stable')
+boundarySource.members[0].name = 'Carol'
+assert.equal(boundaryView.members[0].name, 'Carol', 'commands must remain visible through read views')
 import axios from 'axios'
 import { AuthClient } from '../src/sdk/auth'
 import { ApiError, normalizeApiError } from '../src/sdk/api-error'

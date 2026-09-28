@@ -9,12 +9,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/m1k1o/neko/server/pkg/types"
 )
 
 type Settings struct {
-	CanSend    bool
-	CanReceive bool
+	CanSend    bool `mapstructure:"can_send"`
+	CanReceive bool `mapstructure:"can_receive"`
 }
 
 type Content struct {
@@ -98,10 +100,15 @@ func (s *Service) Send(session types.Session, content Content) error {
 }
 
 func (s *Service) Initialize(session types.Session) {
+	settings, err := s.Settings(session)
+	var history []Message
+	if err == nil && settings.CanReceive {
+		history = s.messages()
+	}
 	session.Send("chat/init", struct {
 		Enabled bool      `json:"enabled"`
 		History []Message `json:"history,omitempty"`
-	}{Enabled: s.enabled, History: s.messages()})
+	}{Enabled: s.enabled, History: history})
 }
 
 func (s *Service) append(message Message) {
@@ -134,11 +141,13 @@ func (s *Service) load() {
 		return
 	}
 	if err != nil {
+		log.Error().Err(err).Msg("unable to read chat history")
 		return
 	}
 
 	var history History
 	if err := json.Unmarshal(data, &history); err != nil {
+		log.Error().Err(err).Msg("unable to decode chat history")
 		return
 	}
 	if s.limit > 0 && len(history.Messages) > s.limit {
@@ -153,6 +162,7 @@ func (s *Service) save(history History) {
 	}
 
 	if err := os.MkdirAll(filepath.Dir(s.file), 0750); err != nil {
+		log.Error().Err(err).Msg("unable to create chat history directory")
 		return
 	}
 	data, err := json.Marshal(history)
@@ -162,7 +172,10 @@ func (s *Service) save(history History) {
 
 	temporary := s.file + ".tmp"
 	if err := os.WriteFile(temporary, data, 0600); err != nil {
+		log.Error().Err(err).Msg("unable to write chat history")
 		return
 	}
-	_ = os.Rename(temporary, s.file)
+	if err := os.Rename(temporary, s.file); err != nil {
+		log.Error().Err(err).Msg("unable to replace chat history")
+	}
 }

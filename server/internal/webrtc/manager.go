@@ -155,7 +155,6 @@ func (manager *WebRTCManagerCtx) Start() {
 		Interface("iceservers-frontend", manager.config.ICEServersFrontend).
 		Interface("iceservers-backend", manager.config.ICEServersBackend).
 		Str("nat1to1", strings.Join(manager.config.NAT1To1IPs, ",")).
-		Str("epr", fmt.Sprintf("%d-%d", manager.config.EphemeralMin, manager.config.EphemeralMax)).
 		Int("tcpmux", manager.config.TCPMux).
 		Int("udpmux", manager.config.UDPMux).
 		Msg("webrtc starting")
@@ -201,12 +200,6 @@ func (manager *WebRTCManagerCtx) newPeerConnection(logger zerolog.Logger, codecs
 	// udp candidates
 	if manager.udpMux != nil {
 		settings.SetICEUDPMux(manager.udpMux)
-		networkType = append(networkType,
-			webrtc.NetworkTypeUDP4,
-			webrtc.NetworkTypeUDP6,
-		)
-	} else if manager.config.EphemeralMax != 0 {
-		_ = settings.SetEphemeralUDPPortRange(manager.config.EphemeralMin, manager.config.EphemeralMax)
 		networkType = append(networkType,
 			webrtc.NetworkTypeUDP4,
 			webrtc.NetworkTypeUDP6,

@@ -1,33 +1,51 @@
 package config
 
-import "testing"
+import (
+	"testing"
 
-func TestParseEphemeralPortRange(t *testing.T) {
+	"github.com/spf13/viper"
+)
+
+func TestUsesLegacyGlobalICEServers(t *testing.T) {
 	tests := []struct {
-		name    string
-		value   string
-		wantMin uint16
-		wantMax uint16
-		wantErr bool
+		name   string
+		value  any
+		legacy bool
 	}{
-		{name: "range", value: "52000-52100", wantMin: 52000, wantMax: 52100},
-		{name: "spaces", value: " 52000 - 52100 ", wantMin: 52000, wantMax: 52100},
-		{name: "single port is invalid", value: "52000", wantErr: true},
-		{name: "reversed range", value: "52100-52000", wantErr: true},
-		{name: "zero minimum", value: "0-52000", wantErr: true},
-		{name: "out of range", value: "52000-65536", wantErr: true},
-		{name: "non numeric", value: "low-high", wantErr: true},
+		{name: "unset", value: nil},
+		{name: "separate endpoint servers", value: map[string]any{"frontend": []any{}, "backend": []any{}}},
+		{name: "legacy list", value: []any{map[string]any{"urls": []any{"stun:example.test"}}}, legacy: true},
+		{name: "legacy JSON environment value", value: `[{"urls":["stun:example.test"]}]`, legacy: true},
+		{name: "unknown nested key", value: map[string]any{"public": []any{}}, legacy: true},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			min, max, err := parseEphemeralPortRange(test.value)
-			if (err != nil) != test.wantErr {
-				t.Fatalf("parseEphemeralPortRange() error = %v, wantErr %v", err, test.wantErr)
-			}
-			if err == nil && (min != test.wantMin || max != test.wantMax) {
-				t.Fatalf("parseEphemeralPortRange() = %d-%d, want %d-%d", min, max, test.wantMin, test.wantMax)
+			if got := usesLegacyGlobalICEServers(test.value); got != test.legacy {
+				t.Fatalf("usesLegacyGlobalICEServers() = %v, want %v", got, test.legacy)
 			}
 		})
+	}
+}
+
+func TestValidateUnsupportedLegacyConfig(t *testing.T) {
+	t.Cleanup(viper.Reset)
+
+	viper.Set("webrtc.epr", "52000-52100")
+	if err := validateUnsupportedLegacyConfig(); err == nil {
+		t.Fatal("validateUnsupportedLegacyConfig() accepted webrtc.epr")
+	}
+
+	viper.Reset()
+	viper.Set("webrtc.iceservers", []any{map[string]any{"urls": []any{"stun:example.test"}}})
+	if err := validateUnsupportedLegacyConfig(); err == nil {
+		t.Fatal("validateUnsupportedLegacyConfig() accepted global webrtc.iceservers")
+	}
+
+	viper.Reset()
+	viper.Set("webrtc.iceservers.frontend", []any{})
+	viper.Set("webrtc.iceservers.backend", []any{})
+	if err := validateUnsupportedLegacyConfig(); err != nil {
+		t.Fatalf("validateUnsupportedLegacyConfig() rejected endpoint ICE servers: %v", err)
 	}
 }

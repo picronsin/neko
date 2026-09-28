@@ -3,16 +3,23 @@
   "env": {
     "node": true
   },
-  "extends": ["plugin:vue/essential", "@vue/prettier", "@vue/typescript"],
+  "extends": ["plugin:vue/vue3-essential", "eslint:recommended"],
   "parserOptions": {
     "parser": "@typescript-eslint/parser"
   },
   "rules": {
+    "no-undef": "off",
+    "no-unused-vars": "off",
+    "no-extra-semi": "off",
+    "vue/multi-word-component-names": ["error", { "ignores": ["neko"] }],
     "vue/valid-v-for": "off",
     "no-case-declarations": "off",
     "no-dupe-class-members": "off",
     "no-console": "off",
     "no-empty": "off"
-  }
+  },
+  "overrides": [{
+    "files": ["src/types/shims-vue.d.ts"],
+    "rules": { "vue/prefer-import-from-vue": "off" }
+  }]
 }
-

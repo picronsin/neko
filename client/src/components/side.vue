@@ -49,6 +49,7 @@
         </li>
       </ul>
     </nav>
+    <neko-voice />
     <div class="page-container">
       <neko-chat v-if="tab === 'chat'" />
       <neko-files v-if="tab === 'files'" />
@@ -131,10 +132,12 @@
   import Chat from '~/components/chat.vue'
   import Files from '~/components/files.vue'
   import Menu from '~/components/menu.vue'
+  import Voice from '~/components/voice.vue'
 
   export default defineComponent({
     name: 'neko-side',
     components: {
+      'neko-voice': Voice,
       'neko-settings': Settings,
       'neko-chat': Chat,
       'neko-files': Files,

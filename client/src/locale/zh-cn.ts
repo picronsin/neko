@@ -40,6 +40,14 @@ export const chat = {
   empty: '还没有消息，向房间打个招呼吧。',
 }
 
+export const voice = {
+  title: '语音聊天',
+  join: '加入语音',
+  leave: '退出语音',
+  connecting: '连接中…',
+  secure_required: '语音需要 HTTPS 或 localhost。',
+}
+
 export const connect = {
   login_title: '登录',
   invitation_title: '你已被邀请加入此房间',

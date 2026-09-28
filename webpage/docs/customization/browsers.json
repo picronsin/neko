@@ -1,8 +1,0 @@
-[
-    {
-        "tag": "chromium",
-        "flavor": "chromium-based",
-        "profileDir": "/home/neko/.config/chromium",
-        "policiesFile": "/etc/chromium/policies/managed/policies.json"
-    }
-]

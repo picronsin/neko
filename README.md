@@ -6,8 +6,7 @@ Chromium，并将桌面画面、音频和控制通道实时提供给浏览器客
 当前发布版本：`v3.1.6`
 
 本版本重点改进了 Chromium 网络连接和登录启动流程、响应式房间界面、视频编解码
-回退，以及本地开发和运行时结构。完整变更记录见
-[发布说明](webpage/docs/release-notes.md)。
+回退，以及本地开发和运行时结构。
 
 Neko 适合以下场景：
 
@@ -132,10 +131,17 @@ docker compose -f demo/compose.local.yaml up -d --build
 | `NEKO_MEMBER_MULTIUSER_USER_PASSWORD` | 普通用户密码 |
 | `NEKO_MEMBER_MULTIUSER_ADMIN_PASSWORD` | 管理员密码 |
 
-完整配置说明位于 [webpage/docs](webpage/docs)，其中包括认证、桌面、媒体、
-WebRTC、插件和反向代理配置。
-
 ## 数据持久化
+
+聊天记录默认自动保存最近 200 条文字消息，用户重新加入房间后会恢复历史。
+`NEKO_CHAT_HISTORY_FILE` 指定文件路径（默认 `/home/neko/.local/share/neko/chat-history.json`），
+`NEKO_CHAT_HISTORY_LIMIT` 指定保留条数。根 Compose 和本地 Demo 已挂载数据卷。
+
+房间侧栏提供独立语音聊天，最多同时 6 人，支持加入、静音和退出；
+不需要桌面控制权，也不会把通话麦克风输入远程 Chromium。语音不录制。
+麦克风需要 HTTPS 或 localhost 以及浏览器授权。跨公网或受限 NAT 部署时，
+通过 `NEKO_WEBRTC_ICESERVERS_FRONTEND` 配置客户端可访问的 TURN 服务。
+语音采用浏览器之间的连接，加入者之间交换网络候选地址；服务端仅转发连接描述。
 
 建议将容器内 `/home/neko/.local/share/neko` 挂载到 Docker volume 或宿主机目录，
 用于保存：
@@ -156,7 +162,6 @@ protocol/            输入协议和共享契约
 runtime/             Xorg、PulseAudio 和容器运行时
 server/              Go 服务端、WebRTC 和 REST API
 demo/                本地构建及 FRP/TURN 示例
-webpage/             项目文档站点
 ```
 
 ## 开发检查
@@ -172,14 +177,6 @@ go build ./...
 
 ```bash
 cd client
-npm run build
-```
-
-文档站点编译：
-
-```bash
-cd webpage
-npm ci
 npm run build
 ```
 

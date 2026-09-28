@@ -2,6 +2,7 @@ import { getterTree, mutationTree, actionTree } from './helpers'
 import { Member } from '~/neko/types'
 import { EVENT } from '~/neko/events'
 import { accessor } from '~/store'
+import type { MediaInput } from '~/sdk/media-protocol'
 
 const keyboardModifierState = (capsLock: boolean, numLock: boolean, scrollLock: boolean) =>
   Number(capsLock) + 2 * Number(numLock) + 4 * Number(scrollLock)
@@ -85,6 +86,27 @@ export const mutations = mutationTree(state, {
 export const actions = actionTree(
   { state, getters, mutations },
   {
+    sendInput({ state, getters }, input: MediaInput) {
+      const controlLocked = accessor.session.locked['control'] && !accessor.user.admin
+      if (
+        !accessor.connection.connected ||
+        !getters.controlling ||
+        state.locked ||
+        (controlLocked && (!getters.hosting || state.implicitHosting))
+      )
+        return
+      switch (input.event) {
+        case 'mousemove':
+          $client.sendData('mousemove', input)
+          break
+        case 'wheel':
+          $client.sendData('wheel', input)
+          break
+        default:
+          $client.sendData(input.event, input)
+      }
+    },
+
     sendClipboard({ getters }, clipboard: string) {
       // Clipboard writes are host-only on the server. In implicit-hosting
       // mode, `hosting` means that input may request control, not that this

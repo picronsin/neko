@@ -1,6 +1,7 @@
 import { createPinia, defineStore, setActivePinia } from 'pinia'
 import { reactive } from 'vue'
 import { mutationTree, getterTree, actionTree } from './helpers'
+import { readonlyState } from './readonly-state'
 
 import * as video from './video'
 import * as chat from './chat'
@@ -41,11 +42,25 @@ export const storePattern = {
 type StoreModule = {
   state: () => Record<string, unknown>
   mutations: Record<string, (state: any, ...args: any[]) => unknown>
-  getters: Record<string, (state: any) => unknown>
+  getters: Record<string, (...args: any[]) => unknown>
   actions: Record<string, (context: any, ...args: any[]) => unknown>
 }
 
 const modules = storePattern.modules as unknown as Record<string, StoreModule>
+
+type Commands<T> = {
+  readonly [K in keyof T]: T[K] extends (context: any, ...args: infer A) => infer R ? (...args: A) => R : never
+}
+
+type ModuleAccessor<T extends StoreModule> = Readonly<ReturnType<T['state']>> &
+  Commands<T['mutations']> &
+  Commands<T['actions']> & {
+    readonly [K in keyof T['getters']]: ReturnType<T['getters'][K]>
+  }
+
+export type NekoAccessor = {
+  readonly [K in keyof typeof storePattern.modules]: ModuleAccessor<(typeof storePattern.modules)[K]>
+} & { initialise(): void }
 
 // Pinia owns the reactive module state.  `accessor` deliberately preserves the
 // public API used throughout the client during the component migration; it is
@@ -53,7 +68,7 @@ const modules = storePattern.modules as unknown as Record<string, StoreModule>
 export const pinia = createPinia()
 setActivePinia(pinia)
 
-export const useNekoStore = defineStore('neko', () => {
+const useNekoStore = defineStore('neko', () => {
   const state = reactive<Record<string, Record<string, unknown>>>({})
   for (const [name, definition] of Object.entries(modules)) {
     state[name] = reactive(definition.state())
@@ -85,23 +100,28 @@ for (const [name, definition] of Object.entries(modules)) {
         return (...args: unknown[]) => definition.actions[property]({ state: moduleState, getters }, ...args)
       }
       if (property in definition.getters) {
-        return getters[property]
+        return readonlyState(getters[property])
       }
-      return moduleState[property]
+      return readonlyState(moduleState[property])
     },
-    set(_target, property: string, value: unknown) {
-      moduleState[property] = value
-      return true
+    set(_target, property: string) {
+      throw new TypeError(`Cannot write ${name}.${property} directly; use a store command`)
+    },
+    deleteProperty() {
+      throw new TypeError('Use a store command to remove state')
+    },
+    defineProperty() {
+      throw new TypeError('Use a store command to define state')
     },
   })
 }
 
-export const accessor: Record<string, any> & { initialise(): void } = {
+export const accessor = {
   ...moduleAccessors,
   initialise() {
     ;(moduleAccessors.emoji.initialise as () => void)()
     ;(moduleAccessors.settings.initialise as () => void)()
   },
-}
+} as NekoAccessor
 
 export default pinia

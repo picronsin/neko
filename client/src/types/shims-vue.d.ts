@@ -9,7 +9,7 @@ declare module '*.vue' {
 declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {
     [key: string]: any
-    $accessor: Record<string, any>
+    $accessor: import('../store').NekoAccessor
     $t: (...args: any[]) => any
     $te: (...args: any[]) => any
     $notify: (...args: any[]) => any

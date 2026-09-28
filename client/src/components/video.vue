@@ -47,78 +47,25 @@
         <span class="connection-status-dot" aria-hidden="true" />
         <span>{{ connectionStatus }}</span>
       </div>
-      <ul v-if="!fullscreen && !hideControls" class="video-menu top">
-        <li>
-          <button
-            type="button"
-            class="video-action"
-            :aria-label="$t('ui.enter_fullscreen')"
-            @click.stop.prevent="requestFullscreen"
-          >
-            <i class="fas fa-expand" aria-hidden="true" />
-          </button>
-        </li>
-        <li v-if="admin">
-          <button
-            type="button"
-            class="video-action"
-            :aria-label="$t('ui.change_resolution')"
-            @click.stop.prevent="openResolution"
-          >
-            <i class="fas fa-desktop" aria-hidden="true" />
-          </button>
-        </li>
-        <li v-if="!controlLocked && !implicitHosting" :class="extraControls ? '' : 'extra-control'">
-          <button
-            type="button"
-            class="video-action"
-            :class="[hosted && !hosting ? 'disabled' : '', !hosted && !hosting ? 'faded' : '']"
-            :aria-label="$t('ui.request_or_release_control')"
-            @click.stop.prevent="toggleControl"
-          >
-            <i class="fas fa-computer-mouse" aria-hidden="true" />
-          </button>
-        </li>
-      </ul>
-      <ul v-if="!fullscreen && !hideControls" class="video-menu bottom">
-        <li v-if="hosting && (!clipboard_read_available || !clipboard_write_available)">
-          <button
-            type="button"
-            class="video-action"
-            :aria-label="$t('ui.open_clipboard')"
-            @click.stop.prevent="openClipboard"
-          >
-            <i class="fas fa-clipboard" aria-hidden="true" />
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            class="video-action"
-            v-if="pip_available"
-            @click.stop.prevent="requestPictureInPicture"
-            v-tooltip="{
-              content: $t('ui.picture_in_picture'),
-              placement: 'left',
-              offset: 5,
-              boundariesElement: 'body',
-            }"
-            :aria-label="$t('ui.picture_in_picture')"
-          >
-            <i class="fas fa-external-link-alt" aria-hidden="true" />
-          </button>
-        </li>
-        <li v-if="hosting && is_touch_device" :class="extraControls ? '' : 'extra-control'">
-          <button
-            type="button"
-            class="video-action"
-            :aria-label="$t('ui.open_keyboard')"
-            @click.stop.prevent="openMobileKeyboard"
-          >
-            <i class="fas fa-keyboard" aria-hidden="true" />
-          </button>
-        </li>
-      </ul>
+      <neko-video-toolbar
+        v-if="!fullscreen && !hideControls"
+        :admin="admin"
+        :control-locked="controlLocked"
+        :implicit-hosting="implicitHosting"
+        :extra-controls="extraControls"
+        :hosted="hosted"
+        :hosting="hosting"
+        :clipboard-read-available="clipboard_read_available"
+        :clipboard-write-available="clipboard_write_available"
+        :pip-available="pip_available"
+        :touch-device="is_touch_device"
+        @request-fullscreen="requestFullscreen"
+        @open-resolution="openResolution"
+        @toggle-control="toggleControl"
+        @open-clipboard="openClipboard"
+        @request-picture-in-picture="requestPictureInPicture"
+        @open-mobile-keyboard="openMobileKeyboard"
+      />
       <neko-resolution ref="resolution" v-if="admin" />
       <neko-clipboard ref="clipboard" v-if="hosting && (!clipboard_read_available || !clipboard_write_available)" />
     </div>
@@ -183,62 +130,6 @@
 
         &.disconnected .connection-status-dot {
           background: $style-error;
-        }
-      }
-
-      .video-menu {
-        position: absolute;
-        z-index: 7;
-        right: $party-gutter;
-
-        &.top {
-          top: $party-gutter;
-        }
-
-        &.bottom {
-          bottom: 15px;
-        }
-
-        li {
-          margin: 0 0 10px 0;
-
-          .video-action {
-            display: grid;
-            place-items: center;
-            width: 30px;
-            height: 30px;
-            padding: 0;
-            border: 1px solid rgba(#fff, 0.12);
-            background: rgba(#fff, 0.12);
-            border-radius: 9px;
-            font-size: 14px;
-            text-align: center;
-            color: rgba($color: #fff, $alpha: 0.6);
-            cursor: pointer;
-            transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-
-            &:hover,
-            &:focus-visible {
-              color: #fff;
-              background: rgba(#fff, 0.22);
-              border-color: rgba(#fff, 0.28);
-              transform: translateY(-1px);
-            }
-
-            &.faded,
-            &.faded i {
-              color: rgba($color: $text-normal, $alpha: 0.4);
-            }
-
-            &.disabled,
-            &.disabled i {
-              color: rgba($color: $style-error, $alpha: 0.4);
-            }
-          }
-
-          &:last-child {
-            margin: 0;
-          }
         }
       }
 
@@ -333,6 +224,7 @@
   import { elementRequestFullscreen, onFullscreenChange, isFullscreen, lockKeyboard, unlockKeyboard } from '~/utils'
   import { ControlInputController } from '~/sdk/control-input'
 
+  import VideoToolbar from './video-toolbar.vue'
   import Emote from './emote.vue'
   import Resolution from './resolution.vue'
   import Clipboard from './clipboard.vue'
@@ -345,6 +237,7 @@
   @Component({
     name: 'neko-video',
     components: {
+      'neko-video-toolbar': VideoToolbar,
       'neko-emote': Emote,
       'neko-resolution': Resolution,
       'neko-clipboard': Clipboard,
@@ -647,7 +540,7 @@
 
       this.observer.observe(this._component)
 
-      onFullscreenChange(this._player, () => {
+      this.removeFullscreenListener = onFullscreenChange(this._player, () => {
         this.fullscreen = isFullscreen()
         this.fullscreen ? lockKeyboard() : unlockKeyboard()
         this.scheduleResize()
@@ -692,7 +585,7 @@
           return true
         }
 
-        this.$client.sendData('keydown', { key: this.keyMap(key) })
+        this.$accessor.remote.sendInput({ event: 'keydown', key: this.keyMap(key) })
         return false
       }
       this.keyboard.onkeyup = (key: number) => {
@@ -700,13 +593,21 @@
           return
         }
 
-        this.$client.sendData('keyup', { key: this.keyMap(key) })
+        this.$accessor.remote.sendInput({ event: 'keyup', key: this.keyMap(key) })
       }
       this.keyboard.listenTo(this._overlay)
       window.addEventListener('focus', this._onWindowFocus)
     }
 
-    beforeDestroy() {
+    beforeUnmount() {
+      this.keyboard.reset()
+      this.keyboard.onkeydown = null
+      this.keyboard.onkeyup = null
+      this.removeFullscreenListener?.()
+      if (this.fullscreen) unlockKeyboard()
+      window.clearTimeout(this.wheelTimer)
+      this.reqMouseDown = null
+      this.reqMouseUp = null
       window.removeEventListener('focus', this._onWindowFocus)
       this._video.removeEventListener('resize', this.scheduleResize)
       this.observer.disconnect()
@@ -877,13 +778,12 @@
         return
       }
 
-      this.$client.sendData('mousemove', {
-        x: point.x,
-        y: point.y,
-      })
+      this.$accessor.remote.sendInput({ event: 'mousemove', x: point.x, y: point.y })
     }
 
     wheelThrottle = false
+    private wheelTimer: number | undefined
+    private removeFullscreenListener: (() => void) | undefined
     onWheel(e: WheelEvent) {
       if (!this.hosting || this.locked) {
         return
@@ -895,9 +795,9 @@
 
       if (!this.wheelThrottle) {
         this.wheelThrottle = true
-        this.$client.sendData('wheel', { x, y, controlKey })
+        this.$accessor.remote.sendInput({ event: 'wheel', x, y, controlKey })
 
-        window.setTimeout(() => {
+        this.wheelTimer = window.setTimeout(() => {
           this.wheelThrottle = false
         }, 100)
       }
@@ -955,7 +855,7 @@
       }
 
       this.sendMousePos(e)
-      this.$client.sendData('mousedown', { key: e.button + 1 })
+      this.$accessor.remote.sendInput({ event: 'mousedown', key: e.button + 1 })
     }
 
     onMouseUp(e: MouseEvent) {
@@ -973,7 +873,7 @@
       }
 
       this.sendMousePos(e)
-      this.$client.sendData('mouseup', { key: e.button + 1 })
+      this.$accessor.remote.sendInput({ event: 'mouseup', key: e.button + 1 })
     }
 
     private reqMouseDown: MouseEvent | null = null
